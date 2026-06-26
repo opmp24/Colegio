@@ -7,3 +7,5 @@ dist/
 .secrets/
 secrets/*
 !secrets/README.md
+.codegraph/
+screenshots/
