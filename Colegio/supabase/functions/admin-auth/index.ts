@@ -25,7 +25,7 @@ async function sendPinEmail(email: string, pin: string, fullName: string) {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "Agenda Escolar <noreply@agendaescolar.app>",
+      from: "Agenda Escolar <onboarding@resend.dev>",
       to: email,
       subject: "Tu código de acceso - Agenda Escolar",
       html: `
@@ -48,7 +48,17 @@ async function sendPinEmail(email: string, pin: string, fullName: string) {
   }
 }
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
 Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
   try {
     const { action, ...params } = await req.json();
 
@@ -80,7 +90,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ ok: true, pin, user_id: authUser.user.id }),
-          { headers: { "Content-Type": "application/json" } },
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 
@@ -105,7 +115,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ ok: true, pin }),
-          { headers: { "Content-Type": "application/json" } },
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 
@@ -129,7 +139,7 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ ok: true, is_blocked: newBlocked }),
-          { headers: { "Content-Type": "application/json" } },
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 
@@ -148,21 +158,21 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ ok: true }),
-          { headers: { "Content-Type": "application/json" } },
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 
       default:
         return new Response(
           JSON.stringify({ error: `Acción desconocida: ${action}` }),
-          { status: 400, headers: { "Content-Type": "application/json" } },
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
     }
   } catch (err) {
     console.error("Error:", err);
     return new Response(
       JSON.stringify({ error: err instanceof Error ? err.message : "Error interno" }),
-      { status: 500, headers: { "Content-Type": "application/json" } },
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }
 });
