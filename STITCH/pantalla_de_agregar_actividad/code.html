@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+
+<html lang="es"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Crear Nueva Actividad - School Agenda PWA</title>
+<!-- Tailwind CSS v3 with Plugins -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<!-- BEGIN: Tailwind Configuration -->
+<script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            academic: {
+              primary: '#4F46E5', // Indigo-600
+              secondary: '#6366F1',
+              accent: '#F59E0B', // Amber-500
+              bg: '#F9FAFB'
+            },
+            course: {
+              math: '#EF4444',
+              science: '#10B981',
+              history: '#F59E0B',
+              english: '#3B82F6',
+              arts: '#EC4899'
+            }
+          }
+        }
+      }
+    }
+  </script>
+<!-- END: Tailwind Configuration -->
+<style data-purpose="custom-transitions">
+    /* Custom toggle switch animation */
+    .toggle-dot {
+      transition: all 0.3s ease-in-out;
+    }
+    input:checked ~ .toggle-bg {
+      background-color: #4F46E5;
+    }
+    input:checked ~ .toggle-dot {
+      transform: translateX(100%);
+    }
+  </style>
+</head>
+<body class="bg-gray-50 font-sans text-gray-900 min-h-screen flex items-center justify-center p-4">
+<!-- BEGIN: Activity Creation Modal -->
+<main class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden border border-gray-100" data-purpose="activity-modal">
+<!-- BEGIN: Modal Header -->
+<header class="px-6 py-5 bg-white border-b border-gray-100 flex items-center justify-between">
+<div class="flex items-center gap-3">
+<div class="p-2 bg-indigo-50 rounded-lg">
+<svg class="h-6 w-6 text-indigo-600" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 4v16m8-8H4" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</div>
+<h1 class="text-xl font-bold text-gray-800">Nueva Actividad</h1>
+</div>
+<button aria-label="Cerrar" class="text-gray-400 hover:text-gray-600 p-1">
+<svg class="h-6 w-6" fill="none" stroke="currentColor" viewbox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+<path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+</svg>
+</button>
+</header>
+<!-- END: Modal Header -->
+<!-- BEGIN: Activity Form -->
+<form class="p-6 space-y-6" id="activityForm">
+<!-- Activity Title -->
+<div data-purpose="input-group">
+<label class="block text-sm font-semibold text-gray-700 mb-1" for="title">Título de la Actividad</label>
+<input class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 transition-colors py-3 px-4 text-gray-800 placeholder-gray-400" id="title" name="title" placeholder="ej. Investigación Proyecto Semestral" type="text"/>
+</div>
+<!-- Course Selection -->
+<div data-purpose="input-group">
+<label class="block text-sm font-semibold text-gray-700 mb-1" for="course">Curso</label>
+<div class="relative">
+<select class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 transition-colors py-3 pl-4 pr-10 appearance-none bg-white text-gray-800" id="course" name="course">
+<option disabled="" selected="" value="">Selecciona una asignatura</option>
+<option class="text-red-600" value="math">● Matemáticas</option>
+<option class="text-emerald-600" value="science">● Ciencia y Física</option>
+<option class="text-amber-600" value="history">● Historia Universal</option>
+<option class="text-blue-600" value="english">● Literatura Inglesa</option>
+<option class="text-pink-600" value="arts">● Artes Visuales</option>
+</select>
+<div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-gray-400">
+<svg class="h-5 w-5" fill="none" stroke="currentColor" viewbox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+</div>
+</div>
+</div>
+<!-- Type Toggle: Material vs Evaluation -->
+<div class="bg-gray-50 p-4 rounded-2xl flex items-center justify-between" data-purpose="type-toggle-container">
+<div class="flex flex-col">
+<span class="text-sm font-semibold text-gray-700">Tipo</span>
+<span class="text-xs text-indigo-600 font-medium uppercase tracking-wider" id="typeLabel">Material de Lectura</span>
+</div>
+<label class="relative inline-flex items-center cursor-pointer" for="typeToggle">
+<input class="sr-only peer" id="typeToggle" type="checkbox"/>
+<div class="toggle-bg w-14 h-7 bg-gray-300 rounded-full peer peer-checked:bg-indigo-600 transition-colors"></div>
+<div class="toggle-dot absolute left-1 top-1 bg-white w-5 h-5 rounded-full shadow-sm transition-transform"></div>
+</label>
+</div>
+<!-- Evaluation Validation Alert (Conditional Visibility) -->
+<div class="hidden animate-fade-in bg-amber-50 border-l-4 border-amber-400 p-4 rounded-r-lg" data-purpose="validation-feedback" id="evaluationAlert">
+<div class="flex">
+<div class="flex-shrink-0">
+<svg class="h-5 w-5 text-amber-400" fill="currentColor" viewbox="0 0 20 20">
+<path clip-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" fill-rule="evenodd"></path>
+</svg>
+</div>
+<div class="ml-3">
+<p class="text-sm text-amber-700">
+<span class="font-bold">Tipo de Evaluación:</span> Se enviará una alerta automática a tu grupo de estudio 24 horas antes de esta fecha.
+            </p>
+</div>
+</div>
+</div>
+<!-- Date Picker -->
+<div data-purpose="input-group">
+<label class="block text-sm font-semibold text-gray-700 mb-1" for="dueDate">Fecha de Entrega</label>
+<div class="relative">
+<input class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 transition-colors py-3 px-4 text-gray-800" id="dueDate" name="dueDate" type="date"/>
+</div>
+</div>
+<!-- Description Textarea -->
+<div data-purpose="input-group">
+<label class="block text-sm font-semibold text-gray-700 mb-1" for="description">Descripción</label>
+<textarea class="w-full rounded-xl border-gray-200 focus:border-indigo-500 focus:ring-indigo-500 transition-colors py-3 px-4 text-gray-800 resize-none" id="description" name="description" placeholder="Añade instrucciones específicas o enlaces a recursos..." rows="3"></textarea>
+</div>
+<!-- Form Actions -->
+<footer class="pt-4 flex gap-3">
+<button class="flex-1 px-4 py-3 border border-gray-200 text-gray-600 font-semibold rounded-xl hover:bg-gray-50 transition-colors" type="button">
+          Cancelar
+        </button>
+<button class="flex-1 px-4 py-3 bg-indigo-600 text-white font-semibold rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 transition-all active:scale-95" type="submit">
+          Guardar Actividad
+        </button>
+</footer>
+</form>
+<!-- END: Activity Form -->
+</main>
+<!-- END: Activity Creation Modal -->
+<!-- BEGIN: Interactive Logic -->
+<script data-purpose="form-interactivity">
+    const typeToggle = document.getElementById('typeToggle');
+    const typeLabel = document.getElementById('typeLabel');
+    const alertBox = document.getElementById('evaluationAlert');
+    const form = document.getElementById('activityForm');
+
+    // Toggle Type Logic
+    typeToggle.addEventListener('change', (e) => {
+      if (e.target.checked) {
+        typeLabel.textContent = 'Evaluación / Examen';
+        typeLabel.classList.replace('text-indigo-600', 'text-amber-600');
+        alertBox.classList.remove('hidden');
+      } else {
+        typeLabel.textContent = 'Material de Lectura';
+        typeLabel.classList.replace('text-amber-600', 'text-indigo-600');
+        alertBox.classList.add('hidden');
+      }
+    });
+
+    // Simple Form Submission Handler
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const data = Object.fromEntries(formData.entries());
+      data.isEvaluation = typeToggle.checked;
+      
+      console.log('Datos de Actividad Guardados:', data);
+      alert('¡Actividad añadida con éxito a tu agenda!');
+    });
+  </script>
+<!-- END: Interactive Logic -->
+</body></html>

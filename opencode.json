@@ -1,0 +1,44 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "default_agent": "plan",
+  "command": {
+    "dev": { "description": "Iniciar dev server Vite", "template": "npm run dev" },
+    "build": { "description": "Build produccion", "template": "npm run build" },
+    "test": { "description": "Ejecutar tests Vitest", "template": "npm run test" },
+    "test:e2e": { "description": "Tests E2E Playwright", "template": "npm run test:e2e" },
+    "lint": { "description": "Lintear proyecto", "template": "npm run lint" },
+    "format": { "description": "Formatear codigo", "template": "npm run format" },
+    "git:status": { "description": "Ver estado del repo", "template": "git status" },
+    "git:log": { "description": "Ver ultimos commits", "template": "git log --oneline -10" },
+    "git:push:develop": { "description": "Push a develop", "template": "git push origin develop" },
+    "git:push:main": {
+      "description": "Push a main (fuerza, reemplaza sitio original)",
+      "template": "git push origin main --force"
+    },
+    "git:branch": {
+      "description": "Ver rama actual y listado",
+      "template": "git branch --show-current && echo --- && git branch -a"
+    },
+    "git:remote": { "description": "Ver remotos configurados", "template": "git remote -v" },
+    "git:diff": { "description": "Ver cambios sin stage", "template": "git diff --stat" },
+    "git:checkout:develop": {
+      "description": "Cambiar a develop",
+      "template": "git checkout develop"
+    },
+    "git:checkout:main": { "description": "Cambiar a main", "template": "git checkout main" },
+    "git:merge:develop": {
+      "description": "Merge develop en main",
+      "template": "git checkout main && git merge develop"
+    },
+    "git:add-commit": {
+      "description": "Stage all + commit con mensaje",
+      "template": "git add -u && git commit -m"
+    },
+    "git:cherry-pick": {
+      "description": "Cherry-pick un commit a otra rama",
+      "template": "git cherry-pick"
+    }
+  },
+  "instructions": ["AGENTS.md", "secrets/README.md"],
+  "permission": { "bash": "allow", "write": "ask", "edit": "ask" }   
+}
