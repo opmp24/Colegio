@@ -1,0 +1,51 @@
+import { supabase } from "@/lib/supabase";
+import type { UserRole } from "@/types";
+
+const ADMIN_FUNCTION = "admin-auth";
+
+interface CreateUserParams {
+  full_name: string;
+  email: string;
+  role: UserRole;
+}
+
+interface CreateUserResult {
+  ok: boolean;
+  pin: string;
+  user_id: string;
+}
+
+interface ResetPinResult {
+  ok: boolean;
+  pin: string;
+}
+
+interface ToggleBlockResult {
+  ok: boolean;
+  is_blocked: boolean;
+}
+
+export function useAdminAuth() {
+  const callFunction = async <T>(body: Record<string, unknown>): Promise<T> => {
+    const { data, error } = await supabase.functions.invoke(ADMIN_FUNCTION, {
+      body,
+    });
+    if (error) throw error;
+    if (!data.ok) throw new Error(data.error ?? "Error desconocido");
+    return data as T;
+  };
+
+  const createUser = (params: CreateUserParams) =>
+    callFunction<CreateUserResult>({ action: "create-user", ...params });
+
+  const resetPin = (userId: string) =>
+    callFunction<ResetPinResult>({ action: "reset-pin", user_id: userId });
+
+  const toggleBlock = (userId: string) =>
+    callFunction<ToggleBlockResult>({ action: "toggle-block", user_id: userId });
+
+  const sendInfo = (userId: string) =>
+    callFunction<{ ok: boolean }>({ action: "send-info", user_id: userId });
+
+  return { createUser, resetPin, toggleBlock, sendInfo };
+}

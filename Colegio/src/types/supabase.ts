@@ -149,6 +149,44 @@ export type Database = {
           },
         ]
       }
+      subjects: {
+        Row: {
+          id: string
+          course_id: string
+          name: string
+          profesor_name: string
+          color: string
+          icon: string
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          course_id: string
+          name: string
+          profesor_name?: string
+          color?: string
+          icon?: string
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          course_id?: string
+          name?: string
+          profesor_name?: string
+          color?: string
+          icon?: string
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subjects_course_id_fkey"
+            columns: null
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: null
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null

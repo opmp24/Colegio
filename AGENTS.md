@@ -195,3 +195,20 @@ src/
 - Políticas por rol: `admin` (CRUD todo), `teacher` (CRUD sus cursos), `student/parent` (solo lectura)
 - No exponer service_role key en cliente — usar anon key + RLS
 - Validar input siempre (Zod schema en server-side)
+
+## Reglas de operación
+
+1. No programar sin contexto
+2. Respuestas cortas
+3. No reescribir archivos completos
+4. No releer archivos ya leídos
+5. Validar antes de declarar hecho
+6. Cero charla aduladora
+7. Soluciones simples
+8. No pelear con el usuario
+9. Leer solo lo necesario
+10. No narrar el plan
+11. Paralelizar tool calls
+12. No duplicar código en respuesta
+13. No usar agentes innecesarios
+14. siempre que solicites crear algo en supabase verifica si tienes permisos para hacerlo

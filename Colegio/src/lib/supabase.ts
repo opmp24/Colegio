@@ -10,6 +10,6 @@ if (!supabaseUrl || !supabaseAnonKey) {
   );
 }
 
-export const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
+export const supabase = createClient<Database, "Colegio">(supabaseUrl, supabaseAnonKey, {
   db: { schema: "Colegio" },
 });
