@@ -31,11 +31,14 @@ export function useAdminAuth() {
       body,
     });
     if (error) {
+      console.error("[admin-auth] error:", error);
+      console.error("[admin-auth] data:", data);
       const msg =
-        error.context?.error ??
-        (typeof data === "object" && data !== null ? (data as any).error : null) ??
-        error.message ??
-        "Error desconocido";
+        typeof error.context === "object" && error.context !== null
+          ? error.context.error ?? JSON.stringify(error.context)
+          : typeof data === "object" && data !== null
+            ? (data as any).error ?? JSON.stringify(data)
+            : error.message ?? "Error desconocido";
       throw new Error(msg);
     }
     if (!data.ok) throw new Error(data.error ?? "Error desconocido");

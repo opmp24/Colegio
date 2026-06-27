@@ -36,6 +36,7 @@ export default function UsersPage() {
       setRole("usuario");
       refetch();
     } catch (err) {
+      console.error("[create-user] error:", err);
       alert(err instanceof Error ? err.message : "Error al crear usuario");
     } finally {
       setCreating(false);
