@@ -30,7 +30,14 @@ export function useAdminAuth() {
     const { data, error } = await supabase.functions.invoke(ADMIN_FUNCTION, {
       body,
     });
-    if (error) throw error;
+    if (error) {
+      const msg =
+        error.context?.error ??
+        (typeof data === "object" && data !== null ? (data as any).error : null) ??
+        error.message ??
+        "Error desconocido";
+      throw new Error(msg);
+    }
     if (!data.ok) throw new Error(data.error ?? "Error desconocido");
     return data as T;
   };
