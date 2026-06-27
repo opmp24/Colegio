@@ -156,6 +156,27 @@ Deno.serve(async (req) => {
         );
       }
 
+      case "delete-user": {
+        const { user_id } = params as { user_id: string };
+
+        const { error: deleteProfileError } = await supabaseAdmin
+          .from("profiles")
+          .delete()
+          .eq("id", user_id);
+
+        if (deleteProfileError) throw deleteProfileError;
+
+        const { error: deleteAuthError } =
+          await supabaseAdmin.auth.admin.deleteUser(user_id);
+
+        if (deleteAuthError) throw deleteAuthError;
+
+        return new Response(
+          JSON.stringify({ ok: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
       case "send-info": {
         const { user_id } = params as { user_id: string };
 

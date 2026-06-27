@@ -62,6 +62,16 @@ export default function UsersPage() {
     }
   };
 
+  const handleDelete = async (userId: string) => {
+    if (!confirm("¿Eliminar este usuario permanentemente? No se puede deshacer.")) return;
+    try {
+      await admin.deleteUser(userId);
+      refetch();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al eliminar usuario");
+    }
+  };
+
   const handleSendInfo = async (userId: string) => {
     try {
       await admin.sendInfo(userId);
@@ -204,6 +214,13 @@ export default function UsersPage() {
                         }`}
                       >
                         {p.is_blocked ? "Desbloquear" : "Bloquear"}
+                      </button>
+                      <button
+                        onClick={() => handleDelete(p.id)}
+                        className="text-xs px-2 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 font-medium"
+                        title="Eliminar usuario permanentemente"
+                      >
+                        Eliminar
                       </button>
                     </div>
                   )}

@@ -47,5 +47,8 @@ export function useAdminAuth() {
   const sendInfo = (userId: string) =>
     callFunction<{ ok: boolean }>({ action: "send-info", user_id: userId });
 
-  return { createUser, resetPin, toggleBlock, sendInfo };
+  const deleteUser = (userId: string) =>
+    callFunction<{ ok: boolean }>({ action: "delete-user", user_id: userId });
+
+  return { createUser, resetPin, toggleBlock, sendInfo, deleteUser };
 }
