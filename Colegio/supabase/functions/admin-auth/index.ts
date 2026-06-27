@@ -10,36 +10,37 @@ function generatePin(): string {
   return Array.from({ length: 8 }, () => Math.floor(Math.random() * 10)).join("");
 }
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
 const SITE_URL = Deno.env.get("SITE_URL") || "http://localhost:5173";
 
 async function sendPinEmail(email: string, pin: string, fullName: string) {
-  if (!RESEND_API_KEY) {
-    console.warn("RESEND_API_KEY no configurada, email no enviado");
+  if (!SENDGRID_API_KEY) {
+    console.warn("SENDGRID_API_KEY no configurada, email no enviado");
     return;
   }
-  const res = await fetch("https://api.resend.com/emails", {
+  const html = `
+    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
+      <h2 style="color:#6366f1">Agenda Escolar</h2>
+      <p>Hola <strong>${fullName}</strong>,</p>
+      <p>Tu c\u00f3digo de acceso es:</p>
+      <div style="font-size:32px;letter-spacing:8px;font-weight:bold;color:#6366f1;text-align:center;padding:24px;background:#eef2ff;border-radius:12px;margin:16px 0">
+        ${pin}
+      </div>
+      <p>Ingresa en <a href="${SITE_URL}" style="color:#6366f1">${SITE_URL}</a> con este c\u00f3digo.</p>
+      <p style="color:#94a3b8;font-size:12px">Este c\u00f3digo es personal e intransferible. No lo compartas.</p>
+    </div>
+  `;
+  const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${RESEND_API_KEY}`,
+      Authorization: `Bearer ${SENDGRID_API_KEY}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: "Agenda Escolar <onboarding@resend.dev>",
-      to: email,
-      subject: "Tu código de acceso - Agenda Escolar",
-      html: `
-        <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
-          <h2 style="color:#6366f1">Agenda Escolar</h2>
-          <p>Hola <strong>${fullName}</strong>,</p>
-          <p>Tu código de acceso es:</p>
-          <div style="font-size:32px;letter-spacing:8px;font-weight:bold;color:#6366f1;text-align:center;padding:24px;background:#eef2ff;border-radius:12px;margin:16px 0">
-            ${pin}
-          </div>
-          <p>Ingresa en <a href="${SITE_URL}" style="color:#6366f1">${SITE_URL}</a> con este código.</p>
-          <p style="color:#94a3b8;font-size:12px">Este código es personal e intransferible. No lo compartas.</p>
-        </div>
-      `,
+      personalizations: [{ to: [{ email }] }],
+      from: { email: "docuarchviosite@gmail.com", name: "Agenda Escolar" },
+      subject: "Tu c\u00f3digo de acceso - Agenda Escolar",
+      content: [{ type: "text/html", value: html }],
     }),
   });
   if (!res.ok) {
