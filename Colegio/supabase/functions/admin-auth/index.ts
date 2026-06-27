@@ -44,7 +44,7 @@ async function sendPinEmail(email: string, pin: string, fullName: string) {
   });
   if (!res.ok) {
     const body = await res.text();
-    console.error("Error enviando email:", body);
+    throw new Error(`Error al enviar email a ${email}: ${body}`);
   }
 }
 
@@ -88,6 +88,8 @@ Deno.serve(async (req) => {
 
         if (updateError) throw updateError;
 
+        await sendPinEmail(email, pin, full_name);
+
         return new Response(
           JSON.stringify({ ok: true, pin, user_id: authUser.user.id }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } },
@@ -106,12 +108,22 @@ Deno.serve(async (req) => {
           password: pin,
         });
 
+        const { data: profile } = await supabaseAdmin
+          .from("profiles")
+          .select("email, full_name")
+          .eq("id", user_id)
+          .single();
+
+        if (!profile) throw new Error("Perfil no encontrado");
+
         const { error: updateError } = await supabaseAdmin
           .from("profiles")
           .update({ pin })
           .eq("id", user_id);
 
         if (updateError) throw updateError;
+
+        await sendPinEmail(profile.email!, pin, profile.full_name);
 
         return new Response(
           JSON.stringify({ ok: true, pin }),
