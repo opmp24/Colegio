@@ -190,34 +190,34 @@ export default function UsersPage() {
                     ))}
                   </select>
                   {isAdmin && currentUser?.id !== p.id && (
-                    <div className="flex gap-1 ml-auto">
+                    <div className="flex flex-wrap gap-1.5 ml-auto">
                       <button
                         onClick={() => handleSendInfo(p.id)}
-                        className="text-xs px-2 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 font-medium"
+                        className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold shadow-sm"
                         title="Enviar información al correo"
                       >
                         Enviar info
                       </button>
                       <button
                         onClick={() => handleResetPin(p.id)}
-                        className="text-xs px-2 py-1 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-600 font-medium"
+                        className="text-xs px-2.5 py-1.5 rounded-lg border border-amber-200 bg-amber-50 hover:bg-amber-100 text-amber-700 font-semibold shadow-sm"
                         title="Generar nuevo código"
                       >
                         Resetear código
                       </button>
                       <button
                         onClick={() => handleToggleBlock(p.id)}
-                        className={`text-xs px-2 py-1 rounded-lg font-medium ${
+                        className={`text-xs px-2.5 py-1.5 rounded-lg border font-semibold shadow-sm ${
                           p.is_blocked
-                            ? "bg-green-50 hover:bg-green-100 text-green-600"
-                            : "bg-red-50 hover:bg-red-100 text-red-600"
+                            ? "border-green-200 bg-green-50 hover:bg-green-100 text-green-700"
+                            : "border-red-200 bg-red-50 hover:bg-red-100 text-red-700"
                         }`}
                       >
                         {p.is_blocked ? "Desbloquear" : "Bloquear"}
                       </button>
                       <button
                         onClick={() => handleDelete(p.id)}
-                        className="text-xs px-2 py-1 rounded-lg bg-red-50 hover:bg-red-100 text-red-700 font-medium"
+                        className="text-xs px-2.5 py-1.5 rounded-lg border border-red-200 bg-white hover:bg-red-50 text-red-700 font-semibold shadow-sm"
                         title="Eliminar usuario permanentemente"
                       >
                         Eliminar
