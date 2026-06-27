@@ -38,7 +38,7 @@ async function sendPinEmail(email: string, pin: string, fullName: string) {
     },
     body: JSON.stringify({
       personalizations: [{ to: [{ email }] }],
-      from: { email: "docuarchviosite@gmail.com", name: "Agenda Escolar" },
+      from: { email: "oko.voljin@gmail.com", name: "Agenda Escolar" },
       subject: "Tu c\u00f3digo de acceso - Agenda Escolar",
       content: [{ type: "text/html", value: html }],
     }),
