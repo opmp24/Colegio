@@ -21,7 +21,7 @@ export default function TeacherDashboard() {
 
   const courseId = selectedCourse === "all" ? undefined : selectedCourse;
   const { data: events } = useEvents(courseId);
-  const { data: upcoming } = useUpcomingEvents(5);
+  const { data: upcoming } = useUpcomingEvents(5, courseId);
 
   const subjectMap = useMemo(() => {
     const map = new Map<string, Subject>();

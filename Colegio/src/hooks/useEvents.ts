@@ -20,17 +20,20 @@ export function useEvents(courseId?: string) {
   });
 }
 
-export function useUpcomingEvents(limit = 5) {
+export function useUpcomingEvents(limit = 5, courseId?: string) {
   return useQuery({
-    queryKey: ["events", "upcoming", limit],
+    queryKey: ["events", "upcoming", limit, courseId],
     queryFn: async () => {
-      const { data, error } = await supabase
+      let query = supabase
         .from("events")
         .select("*, courses:course_id(*)")
         .gte("due_date", new Date().toISOString())
         .order("due_date", { ascending: true })
         .limit(limit);
 
+      if (courseId) query = query.eq("course_id", courseId);
+
+      const { data, error } = await query;
       if (error) throw error;
       return (data ?? []) as any[];
     },

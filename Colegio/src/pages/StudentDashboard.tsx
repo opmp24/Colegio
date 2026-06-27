@@ -9,8 +9,11 @@ import type { Subject } from "@/types";
 export default function StudentDashboard() {
   const { data: courses } = useCourses();
   const { data: subjects } = useSubjects();
-  const { data: events } = useEvents();
-  const { data: upcoming } = useUpcomingEvents(10);
+  const [selectedCourse, setSelectedCourse] = useState<string>("all");
+
+  const courseId = selectedCourse === "all" ? undefined : selectedCourse;
+  const { data: events } = useEvents(courseId);
+  const { data: upcoming } = useUpcomingEvents(10, courseId);
 
   const today = useMemo(() => new Date(), []);
   const [year, setYear] = useState(() => today.getFullYear());
@@ -53,7 +56,29 @@ export default function StudentDashboard() {
 
   return (
     <div className="px-4 py-4 space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
-      {/* View Toggle */}
+      {/* Course Selector */}
+      <div className="flex items-center gap-2 bg-white rounded-xl p-3 shadow-sm lg:col-span-2">
+        <div className="w-2 h-8 rounded-full transition-colors" style={{ backgroundColor: selectedCourse !== "all" ? courses?.find((c) => c.id === selectedCourse)?.color ?? "#6366f1" : "#6366f1" }} />
+        <div className="flex flex-col flex-1">
+          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider" htmlFor="course-select-student">CURSO</label>
+          <select
+            id="course-select-student"
+            value={selectedCourse}
+            onChange={(e) => setSelectedCourse(e.target.value)}
+            className="appearance-none bg-transparent border-none p-0 text-lg font-bold text-slate-800 focus:ring-0 cursor-pointer"
+          >
+            <option value="all">Todos los cursos</option>
+            {courses?.map((c) => (
+              <option key={c.id} value={c.id}>{c.grade} {c.name} {c.section}</option>
+            ))}
+          </select>
+        </div>
+        <svg className="w-4 h-4 text-slate-400 mt-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+
+      {/* Calendar */}
       <section className="bg-white rounded-xl p-4 shadow-sm">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
