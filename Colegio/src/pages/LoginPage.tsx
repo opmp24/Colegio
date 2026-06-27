@@ -1,6 +1,7 @@
 import { useState, useRef, type KeyboardEvent, type ClipboardEvent } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import InstallButton from "@/components/InstallButton/InstallButton";
 
 export default function LoginPage() {
   const { user, signIn } = useAuth();
@@ -108,8 +109,11 @@ export default function LoginPage() {
           </button>
         </section>
 
-        <footer className="mt-12 text-center">
-          <span className="text-xs uppercase tracking-widest text-gray-500 font-bold opacity-40">PWA v1.0</span>
+        <footer className="mt-12 text-center space-y-2">
+          <InstallButton variant="compact" />
+          <div>
+            <span className="text-xs uppercase tracking-widest text-gray-500 font-bold opacity-40">PWA v1.0</span>
+          </div>
         </footer>
       </main>
     </div>

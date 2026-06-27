@@ -2,6 +2,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCourses } from "@/hooks/useCourses";
 import { useEvents } from "@/hooks/useEvents";
 import { useProfiles } from "@/hooks/useProfiles";
+import InstallButton from "@/components/InstallButton/InstallButton";
 
 export default function SettingsPage() {
   const { profile, signOut } = useAuth();
@@ -62,6 +63,9 @@ export default function SettingsPage() {
           <div className="flex justify-between"><span className="text-slate-500">Schema</span><span className="font-semibold font-mono text-xs">Colegio</span></div>
         </div>
       </section>
+
+      {/* Instalar App */}
+      <InstallButton variant="full" />
 
       {/* Cerrar sesión */}
       <button
