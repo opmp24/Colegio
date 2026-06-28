@@ -188,7 +188,8 @@ src/
 - Tipos: `feat`, `fix`, `refactor`, `style`, `docs`, `chore`
 - No committear secrets, `.env`, `node_modules`
 - Branch: `main` (producción) y `develop` (integración)
-
+- Todo el trabajo nuevo va primero a `develop`. NO commitear directo a `main` — usar PR de develop → main.
+- Siempre verificar que se está en la rama correcta antes de escribir código (`git branch`).
 ### Seguridad
 
 - Row Level Security (RLS) en Supabase para todas las tablas

@@ -241,7 +241,7 @@ export default function UsersPage() {
                         onChange={() => handleTogglePermission(p.id, "eventos", p.permissions)}
                         className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-300 cursor-pointer"
                       />
-                      Eventos
+                      Agregar actividades
                     </label>
                   )}
                   {isAdmin && currentUser?.id !== p.id && (
