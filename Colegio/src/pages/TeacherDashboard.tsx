@@ -19,9 +19,9 @@ export default function TeacherDashboard() {
   const [month, setMonth] = useState(() => today.getMonth());
   const [selectedDay, setSelectedDay] = useState<number | null>(today.getDate());
 
-  const courseId = selectedCourse === "all" ? undefined : selectedCourse;
-  const { data: events } = useEvents(courseId);
-  const { data: upcoming } = useUpcomingEvents(5, courseId);
+  const courseIds = selectedCourse === "all" ? undefined : [selectedCourse];
+  const { data: events } = useEvents(courseIds);
+  const { data: upcoming } = useUpcomingEvents(5, courseIds);
 
   const subjectMap = useMemo(() => {
     const map = new Map<string, Subject>();
@@ -35,11 +35,11 @@ export default function TeacherDashboard() {
       const d = ev.due_date.split("T")[0];
       if (!map[d]) map[d] = [];
       const subject = ev.subject_id ? subjectMap.get(ev.subject_id) : undefined;
-      const color = subject?.color ?? courses?.find((c) => c.id === ev.course_id)?.color ?? "#6366f1";
+      const color = subject?.color ?? ev.courses?.color ?? "#6366f1";
       map[d].push({ color });
     });
     return map;
-  }, [events, courses, subjectMap]);
+  }, [events, subjectMap]);
 
   const selectedDateStr = selectedDay
     ? `${year}-${String(month + 1).padStart(2, "0")}-${String(selectedDay).padStart(2, "0")}`
@@ -56,7 +56,7 @@ export default function TeacherDashboard() {
     month: "long",
   });
 
-  const canCreate = profile?.role !== "usuario";
+  const canCreate = profile?.role !== "usuario" || profile?.permissions?.includes("eventos");
 
   return (
     <div className="px-4 py-4 space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
@@ -157,8 +157,8 @@ export default function TeacherDashboard() {
                   <EventCard
                     key={ev.id}
                     event={ev}
-                    courseColor={subj?.color ?? courses?.find((c) => c.id === ev.course_id)?.color}
-                    courseName={courses?.find((c) => c.id === ev.course_id)?.name}
+                    courseColor={subj?.color ?? ev.courses?.color}
+                    courseName={ev.courses ? `${ev.courses.grade} ${ev.courses.name}` : undefined}
                     subjectName={subj?.name}
                     subjectIcon={subj?.icon}
                   />

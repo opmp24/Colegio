@@ -1,19 +1,20 @@
 import { useState, useMemo } from "react";
 import { useEvents, useUpcomingEvents } from "@/hooks/useEvents";
-import { useCourses } from "@/hooks/useCourses";
+import { useUserCourses } from "@/hooks/useUserCourses";
 import { useSubjects } from "@/hooks/useSubjects";
 import CalendarGrid from "@/components/Calendar/CalendarGrid";
 import EventCard from "@/components/EventCard/EventCard";
 import type { Subject } from "@/types";
 
 export default function StudentDashboard() {
-  const { data: courses } = useCourses();
+  const { data: userCourses, isLoading: coursesLoading } = useUserCourses();
   const { data: subjects } = useSubjects();
   const [selectedCourse, setSelectedCourse] = useState<string>("all");
 
-  const courseId = selectedCourse === "all" ? undefined : selectedCourse;
-  const { data: events } = useEvents(courseId);
-  const { data: upcoming } = useUpcomingEvents(10, courseId);
+  const userCourseIds = useMemo(() => userCourses?.map((c) => c.id) ?? [], [userCourses]);
+  const courseIds = selectedCourse === "all" ? userCourseIds : [selectedCourse];
+  const { data: events } = useEvents(courseIds.length ? courseIds : undefined);
+  const { data: upcoming } = useUpcomingEvents(10, courseIds.length ? courseIds : undefined);
 
   const today = useMemo(() => new Date(), []);
   const [year, setYear] = useState(() => today.getFullYear());
@@ -32,11 +33,11 @@ export default function StudentDashboard() {
       const d = ev.due_date.split("T")[0];
       if (!map[d]) map[d] = [];
       const subject = ev.subject_id ? subjectMap.get(ev.subject_id) : undefined;
-      const color = subject?.color ?? courses?.find((c) => c.id === ev.course_id)?.color ?? "#6366f1";
+      const color = subject?.color ?? ev.courses?.color ?? "#6366f1";
       map[d].push({ color });
     });
     return map;
-  }, [events, courses, subjectMap]);
+  }, [events, subjectMap]);
 
   const selectedDateStr = selectedDay
     ? `${year}-${String(month + 1).padStart(2, "0")}-${String(selectedDay).padStart(2, "0")}`
@@ -54,11 +55,34 @@ export default function StudentDashboard() {
     year: "numeric",
   });
 
+  if (coursesLoading) {
+    return (
+      <div className="px-4 py-4">
+        <div className="animate-pulse space-y-4">
+          <div className="h-12 bg-slate-200 rounded-xl" />
+          <div className="h-64 bg-slate-200 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!userCourses?.length) {
+    return (
+      <div className="px-4 py-12 text-center">
+        <svg className="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+        </svg>
+        <h2 className="text-lg font-bold text-slate-600 mb-2">Sin cursos asignados</h2>
+        <p className="text-sm text-slate-400">No tienes cursos asignados. Contacta a un administrador.</p>
+      </div>
+    );
+  }
+
   return (
     <div className="px-4 py-4 space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
       {/* Course Selector */}
       <div className="flex items-center gap-2 bg-white rounded-xl p-3 shadow-sm lg:col-span-2">
-        <div className="w-2 h-8 rounded-full transition-colors" style={{ backgroundColor: selectedCourse !== "all" ? courses?.find((c) => c.id === selectedCourse)?.color ?? "#6366f1" : "#6366f1" }} />
+        <div className="w-2 h-8 rounded-full transition-colors" style={{ backgroundColor: selectedCourse !== "all" ? userCourses?.find((c) => c.id === selectedCourse)?.color ?? "#6366f1" : "#6366f1" }} />
         <div className="flex flex-col flex-1">
           <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider" htmlFor="course-select-student">CURSO</label>
           <select
@@ -67,8 +91,8 @@ export default function StudentDashboard() {
             onChange={(e) => setSelectedCourse(e.target.value)}
             className="appearance-none bg-transparent border-none p-0 text-lg font-bold text-slate-800 focus:ring-0 cursor-pointer"
           >
-            <option value="all">Todos los cursos</option>
-            {courses?.map((c) => (
+            <option value="all">Todos mis cursos</option>
+            {userCourses?.map((c) => (
               <option key={c.id} value={c.id}>{c.grade} {c.name} {c.section}</option>
             ))}
           </select>
@@ -141,8 +165,8 @@ export default function StudentDashboard() {
                 <EventCard
                   key={ev.id}
                   event={ev}
-                  courseColor={subj?.color ?? courses?.find((c) => c.id === ev.course_id)?.color}
-                  courseName={courses?.find((c) => c.id === ev.course_id)?.name}
+                  courseColor={subj?.color ?? ev.courses?.color}
+                  courseName={ev.courses ? `${ev.courses.grade} ${ev.courses.name}` : undefined}
                   subjectName={subj?.name}
                   subjectIcon={subj?.icon}
                 />

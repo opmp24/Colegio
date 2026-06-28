@@ -2,16 +2,16 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import type { Event } from "@/types";
 
-export function useEvents(courseId?: string) {
+export function useEvents(courseIds?: string[]) {
   return useQuery({
-    queryKey: ["events", courseId],
+    queryKey: ["events", courseIds],
     queryFn: async () => {
       let query = supabase
         .from("events")
-        .select("*")
+        .select("*, courses:course_id(*)")
         .order("due_date", { ascending: true });
 
-      if (courseId) query = query.eq("course_id", courseId);
+      if (courseIds?.length) query = query.in("course_id", courseIds);
 
       const { data, error } = await query;
       if (error) throw error;
@@ -20,9 +20,9 @@ export function useEvents(courseId?: string) {
   });
 }
 
-export function useUpcomingEvents(limit = 5, courseId?: string) {
+export function useUpcomingEvents(limit = 5, courseIds?: string[]) {
   return useQuery({
-    queryKey: ["events", "upcoming", limit, courseId],
+    queryKey: ["events", "upcoming", limit, courseIds],
     queryFn: async () => {
       let query = supabase
         .from("events")
@@ -31,7 +31,7 @@ export function useUpcomingEvents(limit = 5, courseId?: string) {
         .order("due_date", { ascending: true })
         .limit(limit);
 
-      if (courseId) query = query.eq("course_id", courseId);
+      if (courseIds?.length) query = query.in("course_id", courseIds);
 
       const { data, error } = await query;
       if (error) throw error;

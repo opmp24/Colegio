@@ -39,6 +39,12 @@ export interface Event {
   due_date: string;
   created_by: string;
   created_at: string;
+  courses?: Pick<Course, "grade" | "name" | "color"> | null;
+}
+
+export interface CourseMember {
+  user_id: string;
+  course_id: string;
 }
 
 export type EventType = Event["type"];

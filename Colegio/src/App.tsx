@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import { TeacherRoute } from "@/components/TeacherRoute";
+import { CanCreateRoute } from "@/components/CanCreateRoute";
 import AppLayout from "@/components/Layout/AppLayout";
 import LoginPage from "@/pages/LoginPage";
 import TeacherDashboard from "@/pages/TeacherDashboard";
@@ -84,7 +85,7 @@ function App() {
               }
             >
               <Route path="/" element={<DashboardRouter />} />
-              <Route path="/crear" element={<TeacherRoute><CreateEvent /></TeacherRoute>} />
+              <Route path="/crear" element={<CanCreateRoute><CreateEvent /></CanCreateRoute>} />
               <Route path="/cursos" element={<TeacherRoute><CoursesPage /></TeacherRoute>} />
               <Route path="/asignaturas" element={<TeacherRoute><SubjectsPage /></TeacherRoute>} />
               <Route path="/usuarios" element={<TeacherRoute><UsersPage /></TeacherRoute>} />

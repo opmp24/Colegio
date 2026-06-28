@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCourses } from "@/hooks/useCourses";
+import { useUserCourses } from "@/hooks/useUserCourses";
 import { useSubjects } from "@/hooks/useSubjects";
 import { useCreateEvent } from "@/hooks/useEvents";
 import { useAuth } from "@/context/AuthContext";
@@ -18,6 +19,7 @@ export default function CreateEvent() {
   const [searchParams] = useSearchParams();
   const { profile } = useAuth();
   const { data: courses } = useCourses();
+  const { data: userCourses } = useUserCourses();
   const { data: subjects } = useSubjects();
   const createEvent = useCreateEvent();
   const dateParam = useMemo(() => {
@@ -33,6 +35,8 @@ export default function CreateEvent() {
     description: "",
     due_date: dateParam,
   });
+
+  const availableCourses = profile?.role === "usuario" ? (userCourses ?? []) : (courses ?? []);
 
   const filteredSubjects = subjects?.filter((s) => !form.course_id || s.course_id === form.course_id) ?? [];
 
@@ -93,7 +97,7 @@ export default function CreateEvent() {
               className="w-full rounded-xl border-gray-200 focus:border-primary-500 focus:ring-primary-500 transition-colors py-3 px-4 appearance-none bg-white"
             >
               <option value="">Selecciona un curso</option>
-              {courses?.map((c) => (
+              {availableCourses.map((c) => (
                 <option key={c.id} value={c.id}>{c.grade} {c.name} {c.section}</option>
               ))}
             </select>
