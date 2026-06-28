@@ -4,8 +4,9 @@ dist/
 .env.local
 .DS_Store
 *.log
-.secrets/
-secrets/*
+.Secrets/
+Secrets/
+Secrets/*
 !secrets/README.md
 .codegraph/
 screenshots/
