@@ -269,6 +269,33 @@ Deno.serve(async (req) => {
         );
       }
 
+      case "update-courses": {
+        const { user_id, course_ids } = params as {
+          user_id: string;
+          course_ids: string[];
+        };
+
+        const { error: delError } = await supabaseColegio
+          .from("course_members")
+          .delete()
+          .eq("user_id", user_id);
+
+        if (delError) throw new Error(`Error al eliminar cursos anteriores: ${JSON.stringify(delError)}`);
+
+        if (course_ids.length > 0) {
+          const rows = course_ids.map((cid) => ({ user_id, course_id: cid }));
+          const { error: insError } = await supabaseColegio
+            .from("course_members")
+            .insert(rows);
+          if (insError) throw new Error(`Error al asignar cursos: ${JSON.stringify(insError)}`);
+        }
+
+        return new Response(
+          JSON.stringify({ ok: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
       case "send-info": {
         const { user_id } = params as { user_id: string };
 

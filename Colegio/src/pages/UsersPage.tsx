@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { db } from "@/lib/db";
 import { useProfiles, useUpdateProfile } from "@/hooks/useProfiles";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/context/AuthContext";
@@ -25,6 +27,39 @@ export default function UsersPage() {
   const [courseIds, setCourseIds] = useState<string[]>([]);
   const [newPin, setNewPin] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
+  const [expandedCourses, setExpandedCourses] = useState<string | null>(null);
+
+  const { data: courseMembers, refetch: refetchCourseMembers } = useQuery({
+    queryKey: ["course-members"],
+    queryFn: async () => {
+      const { data, error } = await db.from("course_members").select("user_id, course_id");
+      if (error) throw error;
+      return (data ?? []) as { user_id: string; course_id: string }[];
+    },
+  });
+
+  const userCourseMap = useMemo(() => {
+    const map = new Map<string, string[]>();
+    (courseMembers ?? []).forEach((cm) => {
+      const ids = map.get(cm.user_id) ?? [];
+      ids.push(cm.course_id);
+      map.set(cm.user_id, ids);
+    });
+    return map;
+  }, [courseMembers]);
+
+  const handleToggleUserCourse = async (userId: string, courseId: string) => {
+    const current = userCourseMap.get(userId) ?? [];
+    const next = current.includes(courseId)
+      ? current.filter((id) => id !== courseId)
+      : [...current, courseId];
+    try {
+      await admin.updateCourses(userId, next);
+      refetchCourseMembers();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al actualizar cursos");
+    }
+  };
 
   const isAdmin = currentUser?.role === "admin";
 
@@ -221,6 +256,24 @@ export default function UsersPage() {
                     </span>
                   )}
                 </div>
+                {isAdmin && (
+                  <div className="mb-2">
+                    <div className="flex flex-wrap gap-1">
+                      {(userCourseMap.get(p.id) ?? []).map((cid) => {
+                        const c = courses?.find((co) => co.id === cid);
+                        return c ? (
+                          <span
+                            key={cid}
+                            className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
+                            style={{ backgroundColor: c.color + "20", color: c.color }}
+                          >
+                            {c.grade} {c.name}
+                          </span>
+                        ) : null;
+                      })}
+                    </div>
+                  </div>
+                )}
                 <div className="flex items-center gap-2">
                   <select
                     value={p.role}
@@ -245,6 +298,17 @@ export default function UsersPage() {
                   )}
                   {isAdmin && currentUser?.id !== p.id && (
                     <div className="flex flex-wrap gap-1.5 ml-auto">
+                      <button
+                        onClick={() => setExpandedCourses(expandedCourses === p.id ? null : p.id)}
+                        className={`text-xs px-2.5 py-1.5 rounded-lg border font-semibold shadow-sm ${
+                          expandedCourses === p.id
+                            ? "border-primary-200 bg-primary-50 text-primary-700"
+                            : "border-slate-200 bg-white hover:bg-slate-50 text-slate-700"
+                        }`}
+                        title="Editar cursos del usuario"
+                      >
+                        Cursos
+                      </button>
                       <button
                         onClick={() => handleSendInfo(p.id)}
                         className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold shadow-sm"
@@ -279,6 +343,30 @@ export default function UsersPage() {
                     </div>
                   )}
                 </div>
+                {expandedCourses === p.id && courses && (
+                  <div className="mt-3 pt-3 border-t border-slate-100">
+                    <p className="text-xs font-semibold text-gray-600 mb-2">Cursos asignados</p>
+                    <div className="flex flex-wrap gap-2">
+                      {courses.map((c) => {
+                        const selected = (userCourseMap.get(p.id) ?? []).includes(c.id);
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => handleToggleUserCourse(p.id, c.id)}
+                            className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+                              selected
+                                ? "bg-primary-600 text-white border-primary-600"
+                                : "bg-white text-slate-600 border-slate-200 hover:border-primary-300"
+                            }`}
+                          >
+                            {c.grade} {c.name} {c.section}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}

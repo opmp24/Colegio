@@ -63,5 +63,8 @@ export function useAdminAuth() {
   const updatePermissions = (userId: string, permissions: string[]) =>
     callFunction<{ ok: boolean }>({ action: "update-permissions", user_id: userId, permissions });
 
-  return { createUser, resetPin, toggleBlock, sendInfo, deleteUser, updatePermissions };
+  const updateCourses = (userId: string, courseIds: string[]) =>
+    callFunction<{ ok: boolean }>({ action: "update-courses", user_id: userId, course_ids: courseIds });
+
+  return { createUser, resetPin, toggleBlock, sendInfo, deleteUser, updatePermissions, updateCourses };
 }
