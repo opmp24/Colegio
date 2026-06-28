@@ -43,16 +43,20 @@ export default function CreateEvent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!profile) return;
-    await createEvent.mutateAsync({
-      course_id: form.course_id,
-      subject_id: form.subject_id || null,
-      title: form.title,
-      description: form.description || null,
-      type: form.type as any,
-      due_date: new Date(form.due_date).toISOString(),
-      created_by: profile.id,
-    });
-    navigate("/");
+    try {
+      await createEvent.mutateAsync({
+        course_id: form.course_id,
+        subject_id: form.subject_id || null,
+        title: form.title,
+        description: form.description || null,
+        type: form.type as any,
+        due_date: new Date(form.due_date).toISOString(),
+        created_by: profile.id,
+      });
+      navigate("/");
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al crear actividad");
+    }
   };
 
   return (

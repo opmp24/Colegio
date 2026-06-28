@@ -106,7 +106,9 @@ export default function SubjectsPage() {
         <div className="text-center py-8 text-slate-400">Cargando asignaturas...</div>
       ) : (
         <div className="space-y-2">
-          {subjects?.map((s) => (
+          {subjects?.map((s) => {
+            const course = courses?.find((c) => c.id === s.course_id);
+            return (
             <div key={s.id} className="bg-white rounded-xl p-4 shadow-sm flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl" style={{ backgroundColor: s.color + "20" }}>
                 {s.icon}
@@ -115,7 +117,7 @@ export default function SubjectsPage() {
                 <p className="font-bold text-slate-800">{s.name}</p>
                 <p className="text-xs text-slate-500">
                   {s.profesor_name && `${s.profesor_name} · `}
-                  {courses?.find((c) => c.id === s.course_id) && `${courses.find((c) => c.id === s.course_id)!.grade} ${courses.find((c) => c.id === s.course_id)!.name}`}
+                  {course && `${course.grade} ${course.name}`}
                 </p>
               </div>
               <button
@@ -135,7 +137,8 @@ export default function SubjectsPage() {
                 </svg>
               </button>
             </div>
-          ))}
+          );
+          })}
           {subjects?.length === 0 && (
             <p className="text-center text-slate-400 py-8 text-sm">No hay asignaturas. Crea la primera.</p>
           )}

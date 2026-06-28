@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/db";
 import type { Subject } from "@/types";
 
 type SubjectInsert = Omit<Subject, "id" | "created_at">;
@@ -8,7 +8,7 @@ export function useSubjects(courseId?: string) {
   return useQuery({
     queryKey: ["subjects", courseId],
     queryFn: async () => {
-      let query = (supabase as any)
+      let query = db
         .from("subjects")
         .select("*")
         .order("name");
@@ -26,7 +26,7 @@ export function useCreateSubject() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (subject: SubjectInsert) => {
-      const { data, error } = await (supabase as any).from("subjects").insert(subject).select().single();
+      const { data, error } = await db.from("subjects").insert(subject).select().single();
       if (error) throw error;
       return data as Subject;
     },
@@ -38,7 +38,7 @@ export function useUpdateSubject() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...subject }: { id: string } & Partial<SubjectInsert>) => {
-      const { data, error } = await (supabase as any).from("subjects").update(subject).eq("id", id).select().single();
+      const { data, error } = await db.from("subjects").update(subject).eq("id", id).select().single();
       if (error) throw error;
       return data as Subject;
     },
@@ -50,7 +50,7 @@ export function useDeleteSubject() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await (supabase as any).from("subjects").delete().eq("id", id);
+      const { error } = await db.from("subjects").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["subjects"] }),

@@ -1,12 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/db";
 import type { Event } from "@/types";
 
 export function useEvents(courseIds?: string[]) {
   return useQuery({
     queryKey: ["events", courseIds],
     queryFn: async () => {
-      let query = supabase
+      let query = db
         .from("events")
         .select("*, courses:course_id(*)")
         .order("due_date", { ascending: true });
@@ -24,7 +24,7 @@ export function useUpcomingEvents(limit = 5, courseIds?: string[]) {
   return useQuery({
     queryKey: ["events", "upcoming", limit, courseIds],
     queryFn: async () => {
-      let query = supabase
+      let query = db
         .from("events")
         .select("*, courses:course_id(*)")
         .gte("due_date", new Date().toISOString())
@@ -44,7 +44,7 @@ export function useCreateEvent() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (event: any) => {
-      const { data, error } = await supabase.from("events").insert(event).select().single();
+      const { data, error } = await db.from("events").insert(event).select().single();
       if (error) throw error;
       return data;
     },
@@ -56,7 +56,7 @@ export function useDeleteEvent() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("events").delete().eq("id", id);
+      const { error } = await db.from("events").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["events"] }),

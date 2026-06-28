@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/db";
 import { useAuth } from "@/context/AuthContext";
 import type { Course } from "@/types";
 
@@ -11,7 +11,7 @@ export function useUserCourses() {
     queryFn: async () => {
       if (!user?.id) return [];
 
-      const { data, error } = await (supabase as any)
+      const { data, error } = await db
         .from("course_members")
         .select("course_id, courses:course_id(*)")
         .eq("user_id", user.id);

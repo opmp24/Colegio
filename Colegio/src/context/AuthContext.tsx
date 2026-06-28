@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/db";
 import type { Profile } from "@/types";
 
 interface AuthState {
@@ -45,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signIn = async (pin: string) => {
-    const { data: loginData, error: rpcError } = await (supabase as any)
+    const { data: loginData, error: rpcError } = await db
       .rpc("login_with_pin", { p_pin: pin })
       .single() as {
         data: { auth_email: string; user_id: string; full_name: string; role: string; is_blocked: boolean } | null;

@@ -10,3 +10,5 @@ secrets/*
 .codegraph/
 screenshots/
 nul
+test-results/
+playwright-report/

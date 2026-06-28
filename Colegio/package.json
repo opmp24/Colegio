@@ -10,6 +10,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:run": "vitest run",
+    "test:e2e": "playwright test",
     "lint": "oxlint",
     "lint:fix": "oxlint --fix",
     "format": "prettier --write \"src/**/*.{ts,tsx,css}\"",
@@ -27,6 +28,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "@playwright/test": "^1.61.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
