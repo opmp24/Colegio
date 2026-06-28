@@ -184,34 +184,17 @@ export default function StudentDashboard() {
             <span className="text-[10px] text-slate-400">{upcoming.length} pendientes</span>
           </div>
           <div className="space-y-3">
-            {upcoming.slice(0, 5).map((ev) => {
+            {upcoming.map((ev) => {
               const subj = ev.subject_id ? subjectMap.get(ev.subject_id) : undefined;
-              const color = subj?.color ?? ev.courses?.color ?? "#6366f1";
               return (
-                <div key={ev.id} className="flex gap-3 items-center">
-                  <div
-                    className="w-10 h-10 rounded-lg flex flex-col items-center justify-center shrink-0"
-                    style={{ backgroundColor: `${color}20` }}
-                  >
-                    <span className="text-[9px] font-bold uppercase" style={{ color }}>
-                      {new Date(ev.due_date).toLocaleDateString("es-CL", { month: "short" })}
-                    </span>
-                    <span className="text-xs font-black" style={{ color }}>
-                      {new Date(ev.due_date).getDate()}
-                    </span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-bold text-slate-800 truncate">{ev.title}</p>
-                    <p className="text-xs text-slate-500">
-                      {[
-                        ev.courses && `${ev.courses.grade} ${ev.courses.name}`,
-                        subj && `${subj.icon} ${subj.name}`,
-                      ].filter(Boolean).join(" · ")}
-                      {" · "}
-                      {new Date(ev.due_date).toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" })}
-                    </p>
-                  </div>
-                </div>
+                <EventCard
+                  key={ev.id}
+                  event={ev}
+                  courseColor={subj?.color ?? ev.courses?.color}
+                  courseName={ev.courses ? `${ev.courses.grade} ${ev.courses.name}` : undefined}
+                  subjectName={subj?.name}
+                  subjectIcon={subj?.icon}
+                />
               );
             })}
           </div>

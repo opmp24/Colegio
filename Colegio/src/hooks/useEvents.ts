@@ -6,6 +6,8 @@ export function useEvents(courseIds?: string[]) {
   return useQuery({
     queryKey: ["events", courseIds],
     queryFn: async () => {
+      if (courseIds && courseIds.length === 0) return [];
+
       let query = db
         .from("events")
         .select("*, courses:course_id(*)")
@@ -24,6 +26,8 @@ export function useUpcomingEvents(limit = 5, courseIds?: string[]) {
   return useQuery({
     queryKey: ["events", "upcoming", limit, courseIds],
     queryFn: async () => {
+      if (courseIds && courseIds.length === 0) return [];
+
       let query = db
         .from("events")
         .select("*, courses:course_id(*)")
