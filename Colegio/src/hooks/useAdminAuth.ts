@@ -7,6 +7,7 @@ interface CreateUserParams {
   full_name: string;
   email: string;
   role: UserRole;
+  course_ids?: string[];
 }
 
 interface CreateUserResult {
@@ -59,5 +60,8 @@ export function useAdminAuth() {
   const deleteUser = (userId: string) =>
     callFunction<{ ok: boolean }>({ action: "delete-user", user_id: userId });
 
-  return { createUser, resetPin, toggleBlock, sendInfo, deleteUser };
+  const updatePermissions = (userId: string, permissions: string[]) =>
+    callFunction<{ ok: boolean }>({ action: "update-permissions", user_id: userId, permissions });
+
+  return { createUser, resetPin, toggleBlock, sendInfo, deleteUser, updatePermissions };
 }

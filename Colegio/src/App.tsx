@@ -1,7 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import { TeacherRoute } from "@/components/TeacherRoute";
 import AppLayout from "@/components/Layout/AppLayout";
 import LoginPage from "@/pages/LoginPage";
 import TeacherDashboard from "@/pages/TeacherDashboard";
@@ -53,10 +55,24 @@ function DashboardRouter() {
   return isTeacher ? <TeacherDashboard /> : <StudentDashboard />;
 }
 
+function RedirectHandler() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    const redirect = sessionStorage.getItem("redirect");
+    if (redirect) {
+      sessionStorage.removeItem("redirect");
+      const path = redirect.replace("/Colegio", "") || "/";
+      if (path !== "/") navigate(path, { replace: true });
+    }
+  }, [navigate]);
+  return null;
+}
+
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
+        <RedirectHandler />
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
@@ -68,10 +84,10 @@ function App() {
               }
             >
               <Route path="/" element={<DashboardRouter />} />
-              <Route path="/crear" element={<CreateEvent />} />
-              <Route path="/cursos" element={<CoursesPage />} />
-              <Route path="/asignaturas" element={<SubjectsPage />} />
-              <Route path="/usuarios" element={<UsersPage />} />
+              <Route path="/crear" element={<TeacherRoute><CreateEvent /></TeacherRoute>} />
+              <Route path="/cursos" element={<TeacherRoute><CoursesPage /></TeacherRoute>} />
+              <Route path="/asignaturas" element={<TeacherRoute><SubjectsPage /></TeacherRoute>} />
+              <Route path="/usuarios" element={<TeacherRoute><UsersPage /></TeacherRoute>} />
               <Route path="/ajustes" element={<SettingsPage />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />

@@ -16,6 +16,7 @@ export interface Profile {
   is_blocked: boolean | null;
   avatar_url: string | null;
   created_at: string;
+  permissions: string[] | null;
 }
 
 export interface Subject {

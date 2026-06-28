@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useProfiles, useUpdateProfile } from "@/hooks/useProfiles";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/context/AuthContext";
+import { useCourses } from "@/hooks/useCourses";
 import type { UserRole } from "@/types";
 
 const roleConfig: Record<UserRole, { label: string; color: string }> = {
@@ -15,11 +16,13 @@ export default function UsersPage() {
   const { data: profiles, isLoading, refetch } = useProfiles();
   const updateProfile = useUpdateProfile();
   const admin = useAdminAuth();
+  const { data: courses } = useCourses();
 
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRole>("usuario");
+  const [courseIds, setCourseIds] = useState<string[]>([]);
   const [newPin, setNewPin] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
 
@@ -29,11 +32,12 @@ export default function UsersPage() {
     if (!name || !email) return;
     setCreating(true);
     try {
-      const result = await admin.createUser({ full_name: name, email, role });
+      const result = await admin.createUser({ full_name: name, email, role, course_ids: courseIds.length ? courseIds : undefined });
       setNewPin(result.pin);
       setName("");
       setEmail("");
       setRole("usuario");
+      setCourseIds([]);
       refetch();
     } catch (err) {
       console.error("[create-user] error:", err);
@@ -41,6 +45,10 @@ export default function UsersPage() {
     } finally {
       setCreating(false);
     }
+  };
+
+  const toggleCourse = (id: string) => {
+    setCourseIds((prev) => prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]);
   };
 
   const handleResetPin = async (userId: string) => {
@@ -85,6 +93,17 @@ export default function UsersPage() {
   const handleRoleChange = async (id: string, newRole: string) => {
     await updateProfile.mutateAsync({ id, role: newRole });
     refetch();
+  };
+
+  const handleTogglePermission = async (userId: string, perm: string, current: string[] | null) => {
+    const perms = current ?? [];
+    const next = perms.includes(perm) ? perms.filter((p) => p !== perm) : [...perms, perm];
+    try {
+      await admin.updatePermissions(userId, next);
+      refetch();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Error al actualizar permisos");
+    }
   };
 
   return (
@@ -145,6 +164,30 @@ export default function UsersPage() {
             <option value="profesor">Profesor</option>
             <option value="admin">Admin</option>
           </select>
+          {courses && courses.length > 0 && (
+            <div>
+              <p className="text-xs font-semibold text-gray-600 mb-2">Asignar a cursos</p>
+              <div className="flex flex-wrap gap-2">
+                {courses.map((c) => {
+                  const selected = courseIds.includes(c.id);
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => toggleCourse(c.id)}
+                      className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+                        selected
+                          ? "bg-primary-600 text-white border-primary-600"
+                          : "bg-white text-slate-600 border-slate-200 hover:border-primary-300"
+                      }`}
+                    >
+                      {c.grade} {c.name} {c.section}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
           <button
             onClick={handleCreate}
             disabled={creating || !name || !email}
@@ -190,6 +233,17 @@ export default function UsersPage() {
                       <option key={val} value={val}>{cfg.label}</option>
                     ))}
                   </select>
+                  {isAdmin && currentUser?.id !== p.id && p.role === "usuario" && (
+                    <label className="flex items-center gap-1.5 text-xs font-medium text-slate-600 cursor-pointer shrink-0">
+                      <input
+                        type="checkbox"
+                        checked={p.permissions?.includes("eventos") ?? false}
+                        onChange={() => handleTogglePermission(p.id, "eventos", p.permissions)}
+                        className="w-4 h-4 rounded border-slate-300 text-primary-600 focus:ring-primary-300 cursor-pointer"
+                      />
+                      Eventos
+                    </label>
+                  )}
                   {isAdmin && currentUser?.id !== p.id && (
                     <div className="flex flex-wrap gap-1.5 ml-auto">
                       <button
