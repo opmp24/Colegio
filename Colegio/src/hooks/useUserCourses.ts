@@ -18,7 +18,10 @@ export function useUserCourses() {
 
       if (error) throw error;
 
-      return (data ?? []).map((item: any) => item.courses as Course);
+      return (data ?? []).reduce((acc: Course[], item: any) => {
+        if (item.courses) acc.push(item.courses as Course);
+        return acc;
+      }, []);
     },
     enabled: !!user?.id,
   });
