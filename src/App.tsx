@@ -2,9 +2,9 @@ import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-route
 import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/context/AuthContext";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { TeacherRoute } from "@/components/TeacherRoute";
-import { CanCreateRoute } from "@/components/CanCreateRoute";
+import { ProtectedRoute } from "@/components/Guards/ProtectedRoute";
+import { TeacherRoute } from "@/components/Guards/TeacherRoute";
+import { CanCreateRoute } from "@/components/Guards/CanCreateRoute";
 import AppLayout from "@/components/Layout/AppLayout";
 import LoginPage from "@/pages/LoginPage";
 import Dashboard from "@/pages/Dashboard";
