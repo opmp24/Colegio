@@ -17,16 +17,13 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: Colegio
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: "npm"
-          cache-dependency-path: Colegio/package-lock.json
+          cache-dependency-path: package-lock.json
       - run: npm ci
       - run: npm run build
         env:
@@ -36,7 +33,7 @@ jobs:
       - uses: actions/configure-pages@v4
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: Colegio/dist
+          path: dist
 
   deploy:
     needs: build
