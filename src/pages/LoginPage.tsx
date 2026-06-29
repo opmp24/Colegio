@@ -1,6 +1,7 @@
 import { useState, useRef, type KeyboardEvent, type ClipboardEvent } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/lib/supabase";
 import InstallButton from "@/components/InstallButton/InstallButton";
 
 export default function LoginPage() {
@@ -8,6 +9,11 @@ export default function LoginPage() {
   const [digits, setDigits] = useState<string[]>(["", "", "", "", "", "", "", ""]);
   const [error, setError] = useState("");
   const [blocked, setBlocked] = useState(false);
+  const [showRecovery, setShowRecovery] = useState(false);
+  const [recoveryEmail, setRecoveryEmail] = useState("");
+  const [recoveryError, setRecoveryError] = useState("");
+  const [recoverySuccess, setRecoverySuccess] = useState(false);
+  const [recoveryLoading, setRecoveryLoading] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   if (user) return <Navigate to="/" replace />;
@@ -54,6 +60,61 @@ export default function LoginPage() {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al iniciar sesión");
     }
+  };
+
+  const handleRecoverySubmit = async () => {
+    if (!recoveryEmail) {
+      setRecoveryError("Por favor ingresa tu correo electrónico");
+      return;
+    }
+
+    // Validación básica de formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(recoveryEmail)) {
+      setRecoveryError("Por favor ingresa un correo electrónico válido");
+      return;
+    }
+
+    setRecoveryLoading(true);
+    setRecoveryError("");
+    setRecoverySuccess(false);
+
+    try {
+      // Llamar a la Edge Function para recuperación de PIN
+      const { data, error } = await supabase.functions.invoke("admin-auth", {
+        body: {
+          action: "recover-pin",
+          email: recoveryEmail,
+        },
+      });
+
+      if (error) throw error;
+
+      if (!data.ok) {
+        throw new Error(data.error || "Error desconocido");
+      }
+
+      setRecoverySuccess(true);
+      setRecoveryLoading(false);
+      // El email se envía en segundo plano, solo mostramos éxito
+    } catch (err) {
+      setRecoveryLoading(false);
+      // No revelamos si el email existe o no por seguridad
+      // Pero seguimos el requisito específico del usuario de mostrar mensaje específico
+      setRecoveryError(
+        err instanceof Error
+          ? err.message
+          : "Error al procesar la solicitud. Inténtalo nuevamente."
+      );
+    }
+  };
+
+  const handleRecoveryClose = () => {
+    setShowRecovery(false);
+    setRecoveryEmail("");
+    setRecoveryError("");
+    setRecoverySuccess(false);
+    setRecoveryLoading(false);
   };
 
   return (
@@ -107,7 +168,74 @@ export default function LoginPage() {
           >
             Ingresar
           </button>
+
+          {/* Link para recuperar PIN */}
+          <div className="mt-4 text-center">
+            <button
+              onClick={() => setShowRecovery(true)}
+              className="text-sm font-medium text-primary-600 hover:text-primary-700 underline"
+            >
+              ¿Olvidó su PIN?
+            </button>
+          </div>
         </section>
+
+        {/* Modal de recuperación de PIN */}
+        {showRecovery && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-xl">
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="text-xl font-semibold text-gray-700">Recuperar código de acceso</h2>
+                <button
+                  onClick={handleRecoveryClose}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ×
+                </button>
+              </div>
+              <p className="text-sm text-gray-500 mb-4">
+                Ingresa tu correo electrónico registrado para recibir un nuevo código de acceso.
+              </p>
+
+              {recoverySuccess && (
+                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl">
+                  <p className="text-sm font-medium text-green-600">
+                    Si el correo está registrado, se ha enviado un nuevo código de acceso a tu email.
+                  </p>
+                  <p className="text-xs text-green-500 mt-1">
+                    Revisa tu bandeja de entrada (y carpeta de spam).
+                  </p>
+                </div>
+              )}
+
+              {!recoverySuccess && (
+                <>
+                  {recoveryError && (
+                    <p className="text-red-500 text-sm mb-4">{recoveryError}</p>
+                  )}
+                  <div className="mb-4">
+                    <input
+                      type="email"
+                      placeholder="Tu correo electrónico"
+                      value={recoveryEmail}
+                      onChange={(e) => setRecoveryEmail(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary-500 focus:ring focus:ring-primary-200"
+                      disabled={recoveryLoading}
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleRecoverySubmit}
+                    disabled={recoveryLoading || !recoveryEmail}
+                    className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 text-white font-semibold py-3 rounded-xl transition-all"
+                  >
+                    {recoveryLoading ? "Enviando..." : "Enviar recuperación"}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         <footer className="mt-12 text-center space-y-2">
           <InstallButton variant="compact" />

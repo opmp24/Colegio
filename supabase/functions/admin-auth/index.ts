@@ -15,6 +15,58 @@ function generatePin(): string {
   return Array.from({ length: 8 }, () => Math.floor(Math.random() * 10)).join("");
 }
 
+// Función para crear un hash seguro del PIN usando SHA-256 con salt
+async function hashPin(pin: string): Promise<string> {
+  // Generar salt aleatorio (16 bytes)
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const encoder = new TextEncoder();
+  const data = new Uint8Array([...salt, ...encoder.encode(pin)]);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  
+  // Convertir a formato almacenable: salt:hash (ambos en hex)
+  const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
+  const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  return `sha256:${saltHex}:${hashHex}`;
+}
+
+// Función para verificar un PIN contra su hash
+async function verifyPin(pin: string, hash: string): Promise<boolean> {
+  if (!hash.startsWith('sha256:')) {
+    // Formato desconocido, asumir que es un hash legado (para compatibilidad durante migración)
+    // En un entorno real, deberíamos manejar esto de manera más segura
+    return false;
+  }
+  
+  try {
+    const parts = hash.split(':');
+    if (parts.length !== 3) return false;
+    
+    const algorithm = parts[0];
+    const saltHex = parts[1];
+    const expectedHashHex = parts[2];
+    
+    if (algorithm !== 'sha256') return false;
+    
+    // Decodificar salt desde hex
+    const saltBytes = new Uint8Array(
+      saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16))
+    );
+    
+    // Calcular hash del PIN proporcionado
+    const encoder = new TextEncoder();
+    const data = new Uint8Array([...saltBytes, ...encoder.encode(pin)]);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashHex = Array.from(new Uint8Array(hashBuffer))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    return hashHex === expectedHashHex;
+  } catch (e) {
+    return false;
+  }
+}
+
 const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
 const SITE_URL = Deno.env.get("SITE_URL") || "http://localhost:5173";
 
@@ -27,12 +79,12 @@ async function sendPinEmail(email: string, pin: string, fullName: string) {
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
       <h2 style="color:#6366f1">Agenda Escolar</h2>
       <p>Hola <strong>${fullName}</strong>,</p>
-      <p>Tu c\u00f3digo de acceso es:</p>
+      <p>Tu código de acceso es:</p>
       <div style="font-size:32px;letter-spacing:8px;font-weight:bold;color:#6366f1;text-align:center;padding:24px;background:#eef2ff;border-radius:12px;margin:16px 0">
         ${pin}
       </div>
-      <p>Ingresa en <a href="${SITE_URL}" style="color:#6366f1">${SITE_URL}</a> con este c\u00f3digo.</p>
-      <p style="color:#94a3b8;font-size:12px">Este c\u00f3digo es personal e intransferible. No lo compartas.</p>
+      <p>Ingresa en <a href="${SITE_URL}" style="color:#6366f1">${SITE_URL}</a> con este código.</p>
+      <p style="color:#94a3b8;font-size:12px">Este código es personal e intransferible. No lo compartas.</p>
     </div>
   `;
   const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
@@ -44,7 +96,7 @@ async function sendPinEmail(email: string, pin: string, fullName: string) {
     body: JSON.stringify({
       personalizations: [{ to: [{ email }] }],
       from: { email: "docuarchviosite@gmail.com", name: "Agenda Escolar" },
-      subject: "Tu c\u00f3digo de acceso - Agenda Escolar",
+      subject: "Tu código de acceso - Agenda Escolar",
       content: [{ type: "text/html", value: html }],
     }),
   });
@@ -77,6 +129,7 @@ Deno.serve(async (req) => {
           course_ids?: string[];
         };
         const pin = generatePin();
+        const pinHash = await hashPin(pin); // Generar hash seguro en lugar de guardar PIN plano
 
         const saveCourses = async (userId: string) => {
           if (!course_ids?.length) return;
@@ -101,7 +154,7 @@ Deno.serve(async (req) => {
 
           const { error: upsertError } = await supabaseColegio
             .from("profiles")
-            .upsert({ id: existing.id, pin, email, full_name, role });
+            .upsert({ id: existing.id, pin_hash: pinHash, email, full_name, role });
 
           if (upsertError) throw upsertError;
 
@@ -131,7 +184,7 @@ Deno.serve(async (req) => {
 
         const { error: upsertError } = await supabaseColegio
           .from("profiles")
-          .upsert({ id: authUser.user.id, pin, email, full_name, role });
+          .upsert({ id: authUser.user.id, pin_hash: pinHash, email, full_name, role });
 
         if (upsertError) throw upsertError;
 
@@ -147,6 +200,7 @@ Deno.serve(async (req) => {
       case "reset-pin": {
         const { user_id } = params as { user_id: string };
         const pin = generatePin();
+        const pinHash = await hashPin(pin); // Generar hash seguro
 
         const { error: userError } =
           await supabaseAuth.auth.admin.getUserById(user_id);
@@ -166,7 +220,7 @@ Deno.serve(async (req) => {
 
         const { error: updateError } = await supabaseColegio
           .from("profiles")
-          .update({ pin })
+          .update({ pin_hash: pinHash }) // Actualizar hash en lugar de PIN plano
           .eq("id", user_id);
 
         if (updateError) throw updateError;
@@ -176,6 +230,68 @@ Deno.serve(async (req) => {
         return new Response(
           JSON.stringify({ ok: true, pin }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      case "recover-pin": {
+        // Nueva acción para recuperación de PIN por email (acceso público)
+        const { email } = params as { email: string };
+
+        if (!email) {
+          return new Response(
+            JSON.stringify({ error: "Email requerido" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Buscar el perfil por email
+        const { data: profile, error: profileError } = await supabaseColegio
+          .from("profiles")
+          .select("id, email, full_name")
+          .eq("email", email)
+          .single();
+
+        if (profileError) {
+          // No revelamos si el email existe o no por seguridad de enumeración
+          // Pero simulamos éxito para no filtrar información
+          await simulateDelay();
+          return new Response(
+            JSON.stringify({ ok: true, message: "Si el correo está registrado, se ha enviado un nuevo código" }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        if (!profile) {
+          // Mismo enfoque: no revelar inexistencia
+          await simulateDelay();
+          return new Response(
+            JSON.stringify({ ok: true, message: "Si el correo está registrado, se ha enviado un nuevo código" }),
+            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Generar nuevo PIN y hash
+        const pin = generatePin();
+        const pinHash = await hashPin(pin);
+
+        // Actualizar Auth y perfil
+        await supabaseAuth.auth.admin.updateUserById(profile.id, {
+          password: pin,
+        });
+
+        const { error: updateError } = await supabaseColegio
+          .from("profiles")
+          .update({ pin_hash: pinHash })
+          .eq("id", profile.id);
+
+        if (updateError) throw updateError;
+
+        // Enviar email con el nuevo PIN
+        await sendPinEmail(profile.email, pin, profile.full_name);
+
+        return new Response(
+          JSON.stringify({ ok: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
@@ -297,17 +413,49 @@ Deno.serve(async (req) => {
       }
 
       case "send-info": {
+        // NOTA: Esta función ya no puede enviar el PIN actual porque solo tenemos el hash
+        // En su lugar, informamos al usuario que debe usar la función de recuperación
         const { user_id } = params as { user_id: string };
 
         const { data: profile } = await supabaseColegio
           .from("profiles")
-          .select("email, full_name, pin")
+          .select("email, full_name")
           .eq("id", user_id)
           .single();
 
         if (!profile) throw new Error("Perfil no encontrado");
 
-        await sendPinEmail(profile.email!, profile.pin!, profile.full_name);
+        // Enviar email informativo en lugar del PIN actual
+        if (SENDGRID_API_KEY) {
+          const html = `
+            <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
+              <h2 style="color:#6366f1">Agenda Escolar</h2>
+              <p>Hola <strong>${profile.full_name}</strong>,</p>
+              <p>Se ha solicitado información de su cuenta de Agenda Escolar.</p>
+              <p>Por razones de seguridad, no podemos enviar su código de acceso actual por email.</p>
+              <p>Si necesita acceder a su cuenta y no recuerda su código, utilice la función de "Recuperar Código" en la página de ingreso.</p>
+              <p>Si continúa teniendo problemas, contacte al administrador de su institución.</p>
+              <p style="color:#94a3b8;font-size:12px">Este mensaje es informativo y no requiere respuesta.</p>
+            </div>
+          `;
+          const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${SENDGRID_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              personalizations: [{ to: [{ email: profile.email }] }],
+              from: { email: "docuarchviosite@gmail.com", name: "Agenda Escolar" },
+              subject: "Información de su cuenta - Agenda Escolar",
+              content: [{ type: "text/html", value: html }],
+            }),
+          });
+          if (!res.ok) {
+            const body = await res.text();
+            throw new Error(`Error al enviar email a ${profile.email}: ${body}`);
+          }
+        }
 
         return new Response(
           JSON.stringify({ ok: true }),
@@ -330,3 +478,8 @@ Deno.serve(async (req) => {
     );
   }
 });
+
+// Función auxiliar para simular retraso y evitar enumeración de emails
+async function simulateDelay() {
+  return new Promise(resolve => setTimeout(resolve, 500));
+}
