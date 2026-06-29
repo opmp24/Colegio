@@ -38,7 +38,7 @@ function RedirectHandler() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
+      <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "")}>
         <RedirectHandler />
         <AuthProvider>
           <Routes>
