@@ -13,3 +13,4 @@ screenshots/
 nul
 test-results/
 playwright-report/
+/local/
