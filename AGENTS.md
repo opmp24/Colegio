@@ -8,7 +8,7 @@ PWA informativa para apoderados y alumnos de un colegio, organizada por curso. P
 - **Idioma:** Español (código, comentarios, UI, commits)
 - **Repo:** `https://github.com/opmp24/Colegio`
 - **Supabase:** Credenciales en `/secrets/keys` (no committear)
-- **Deploy:** Manual desde local con `npm run build`. NO usa GitHub Actions ni rama `gh-pages`.
+- **Deploy:** Automático via GitHub Actions al pushear a `main`. NO usa rama `gh-pages`.
 
 ## Commands
 
@@ -216,3 +216,4 @@ src/
 12. No duplicar código en respuesta
 13. No usar agentes innecesarios
 14. siempre que solicites crear algo en supabase verifica si tienes permisos para hacerlo
+15. cuando el usuario diga que una versión es estable, crear un tag en git con formato `v<major>.<minor>.<patch>` (ej: v1.0.0, v1.1.0) en la rama `main` y pushearlo
