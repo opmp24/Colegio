@@ -8,6 +8,7 @@ PWA informativa para apoderados y alumnos de un colegio, organizada por curso. P
 - **Idioma:** Español (código, comentarios, UI, commits)
 - **Repo:** `https://github.com/opmp24/Colegio`
 - **Supabase:** Credenciales en `/secrets/keys` (no committear)
+- **Deploy:** Manual desde local con `npm run build`. NO usa GitHub Actions ni rama `gh-pages`.
 
 ## Commands
 
