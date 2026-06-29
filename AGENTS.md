@@ -127,6 +127,7 @@ import "./Dashboard.css";
 - Prefer React Query / TanStack Query sobre `useEffect` para data fetching
 - Mutations via `useMutation` con invalidación de queries
 - Autenticación via `supabase.auth` — sesión en contexto/auth provider
+- revisar politicas RLS de la base de datos para determinar errores correctamente
 
 ### Manejo de Errores
 
@@ -190,6 +191,7 @@ src/
 - Branch: `main` (producción) y `develop` (integración)
 - Todo el trabajo nuevo va primero a `develop`. NO commitear directo a `main` — usar PR de develop → main.
 - Siempre verificar que se está en la rama correcta antes de escribir código (`git branch`).
+- Al finalizar un commit, indicar en qué rama se hizo como texto final de salida.
 ### Seguridad
 
 - Row Level Security (RLS) en Supabase para todas las tablas
