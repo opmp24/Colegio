@@ -4,22 +4,21 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 
-const base = process.env.GITHUB_PAGES ? "/Colegio/" : "/";
-
 export default defineConfig({
-  base,
+  base: "/Colegio/",
+  build: { outDir: "docs" },
   plugins: [
     react(),
     VitePWA({
-      base,
+      base: "/Colegio/",
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "icon-192.png", "icon-512.png"],
       manifest: {
         name: "Agenda Escolar",
         short_name: "Agenda",
         description: "Calendario académico y agenda de actividades escolares",
-        start_url: base,
-        scope: base,
+        start_url: "/Colegio/",
+        scope: "/Colegio/",
         theme_color: "#6366f1",
         background_color: "#f8fafc",
         display: "standalone",
