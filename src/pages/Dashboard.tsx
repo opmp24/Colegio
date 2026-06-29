@@ -21,9 +21,8 @@ export default function Dashboard() {
   const courses = isTeacher ? allCourses : userCourses;
   const isLoading = isTeacher ? allCoursesLoading : userCoursesLoading;
 
-  const userCourseIds = useMemo(() => userCourses?.map((c) => c.id) ?? [], [userCourses]);
   const courseIds = selectedCourse === "all"
-    ? (isTeacher ? undefined : userCourseIds.length ? userCourseIds : undefined)
+    ? (courses?.map((c) => c.id) ?? [])
     : [selectedCourse];
 
   const { data: events } = useEvents(courseIds);
