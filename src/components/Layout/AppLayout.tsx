@@ -34,10 +34,10 @@ export default function AppLayout() {
   ].filter(Boolean);
 
   return (
-    <div className="min-h-screen bg-school-bg text-slate-900 pb-20 md:pb-0 md:flex">
+    <div className="min-h-screen bg-school-bg dark:bg-slate-900 text-slate-900 dark:text-slate-100 pb-20 md:pb-0 md:flex">
       {/* Sidebar Desktop */}
-      <aside className="hidden md:flex w-64 flex-col border-r border-slate-200 bg-white">
-        <div className="p-6 flex items-center gap-3 border-b border-slate-100">
+      <aside className="hidden md:flex w-64 flex-col border-r border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800">
+        <div className="p-6 flex items-center gap-3 border-b border-slate-100 dark:border-slate-700">
           <div className="w-[35px] h-[35px] bg-blue-900 rounded-full flex items-center justify-center">
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.2} d="m4 12 8-8 8 8M6 10.5V19a1 1 0 0 0 1 1h3v-3a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v3h3a1 1 0 0 0 1-1v-8.5" />
@@ -52,8 +52,8 @@ export default function AppLayout() {
               onClick={() => navigate(item.path)}
               className={`flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm font-medium transition-colors ${
                 location.pathname === item.path
-                  ? "bg-primary-50 text-primary-700 font-semibold"
-                  : "text-slate-600 hover:bg-slate-50"
+                  ? "bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700/50"
               }`}
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
