@@ -118,27 +118,27 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-school-bg flex flex-col items-center justify-center p-6">
+    <div className="min-h-screen bg-school-bg dark:bg-slate-900 flex flex-col items-center justify-center p-6">
       <main className="w-full max-w-sm flex flex-col items-center">
         <header className="mb-10 text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-primary-100 rounded-2xl mb-4 shadow-sm">
-            <svg className="w-12 h-12 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-primary-100 dark:bg-primary-900/50 rounded-2xl mb-4 shadow-sm">
+            <svg className="w-12 h-12 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
             </svg>
           </div>
-          <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Agenda Escolar</h1>
-          <p className="text-gray-500 mt-2">Tu día a día, organizado.</p>
+          <h1 className="text-3xl font-bold text-gray-800 dark:text-slate-100 tracking-tight">Agenda Escolar</h1>
+          <p className="text-gray-500 dark:text-slate-400 mt-2">Tu día a día, organizado.</p>
         </header>
 
-        <section className="w-full bg-white/80 backdrop-blur-sm p-8 rounded-3xl shadow-xl border border-white/40">
-          <h2 className="text-xl font-semibold text-gray-700 mb-2 text-center">Ingresa tu código</h2>
-          <p className="text-sm text-gray-400 text-center mb-6">Usa el código de 8 dígitos que te entregó tu establecimiento.</p>
+        <section className="w-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm p-8 rounded-3xl shadow-xl dark:shadow-slate-900/50 border border-white/40 dark:border-slate-700/40">
+          <h2 className="text-xl font-semibold text-gray-700 dark:text-slate-200 mb-2 text-center">Ingresa tu código</h2>
+          <p className="text-sm text-gray-400 dark:text-slate-500 text-center mb-6">Usa el código de 8 dígitos que te entregó tu establecimiento.</p>
 
           {blocked && (
-            <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-center">
-              <p className="text-sm font-medium text-red-600">Cuenta bloqueada</p>
-              <p className="text-xs text-red-500 mt-1">Contacta al administrador.</p>
+            <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-center">
+              <p className="text-sm font-medium text-red-600 dark:text-red-400">Cuenta bloqueada</p>
+              <p className="text-xs text-red-500 dark:text-red-400 mt-1">Contacta al administrador.</p>
             </div>
           )}
 
@@ -154,17 +154,17 @@ export default function LoginPage() {
                 onChange={(e) => handleChange(i, e.target.value)}
                 onKeyDown={(e) => handleKeyDown(i, e)}
                 onPaste={i === 0 ? handlePaste : undefined}
-                className="w-10 h-12 text-center text-lg font-bold rounded-xl border-2 border-gray-200 focus:border-primary-500 focus:ring focus:ring-primary-200 transition-all bg-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                className="w-10 h-12 text-center text-lg font-bold rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-primary-500 focus:ring focus:ring-primary-200 transition-all bg-white dark:bg-slate-700 dark:text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
             ))}
           </div>
 
-          {error && <p className="text-red-500 text-sm text-center mb-4">{error}</p>}
+          {error && <p className="text-red-500 dark:text-red-400 text-sm text-center mb-4">{error}</p>}
 
           <button
             onClick={handleSubmit}
             disabled={digits.some((d) => !d)}
-            className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 text-white font-semibold py-4 rounded-xl shadow-lg shadow-primary-100 transition-all active:scale-[0.98] disabled:shadow-none"
+            className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-semibold py-4 rounded-xl shadow-lg shadow-primary-100 dark:shadow-primary-900/30 transition-all active:scale-[0.98] disabled:shadow-none"
           >
             Ingresar
           </button>
@@ -173,7 +173,7 @@ export default function LoginPage() {
           <div className="mt-4 text-center">
             <button
               onClick={() => setShowRecovery(true)}
-              className="text-sm font-medium text-primary-600 hover:text-primary-700 underline"
+              className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 underline"
             >
               ¿Olvidó su PIN?
             </button>
@@ -182,27 +182,27 @@ export default function LoginPage() {
 
         {/* Modal de recuperación de PIN */}
         {showRecovery && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-xl">
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-md w-full mx-4 shadow-xl">
               <div className="flex justify-between items-start mb-4">
-                <h2 className="text-xl font-semibold text-gray-700">Recuperar código de acceso</h2>
+                <h2 className="text-xl font-semibold text-gray-700 dark:text-slate-200">Recuperar código de acceso</h2>
                 <button
                   onClick={handleRecoveryClose}
-                  className="text-gray-400 hover:text-gray-600"
+                  className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300"
                 >
                   ×
                 </button>
               </div>
-              <p className="text-sm text-gray-500 mb-4">
+              <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
                 Ingresa tu correo electrónico registrado para recibir un nuevo código de acceso.
               </p>
 
               {recoverySuccess && (
-                <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-xl">
-                  <p className="text-sm font-medium text-green-600">
+                <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
+                  <p className="text-sm font-medium text-green-600 dark:text-green-400">
                     Si el correo está registrado, se ha enviado un nuevo código de acceso a tu email.
                   </p>
-                  <p className="text-xs text-green-500 mt-1">
+                  <p className="text-xs text-green-500 dark:text-green-400 mt-1">
                     Revisa tu bandeja de entrada (y carpeta de spam).
                   </p>
                 </div>
@@ -211,7 +211,7 @@ export default function LoginPage() {
               {!recoverySuccess && (
                 <>
                   {recoveryError && (
-                    <p className="text-red-500 text-sm mb-4">{recoveryError}</p>
+                    <p className="text-red-500 dark:text-red-400 text-sm mb-4">{recoveryError}</p>
                   )}
                   <div className="mb-4">
                     <input
@@ -219,7 +219,7 @@ export default function LoginPage() {
                       placeholder="Tu correo electrónico"
                       value={recoveryEmail}
                       onChange={(e) => setRecoveryEmail(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-primary-500 focus:ring focus:ring-primary-200"
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:border-primary-500 focus:ring focus:ring-primary-200 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400"
                       disabled={recoveryLoading}
                     />
                   </div>
@@ -227,7 +227,7 @@ export default function LoginPage() {
                   <button
                     onClick={handleRecoverySubmit}
                     disabled={recoveryLoading || !recoveryEmail}
-                    className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 text-white font-semibold py-3 rounded-xl transition-all"
+                    className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-semibold py-3 rounded-xl transition-all"
                   >
                     {recoveryLoading ? "Enviando..." : "Enviar recuperación"}
                   </button>
@@ -240,7 +240,7 @@ export default function LoginPage() {
         <footer className="mt-12 text-center space-y-2">
           <InstallButton variant="compact" />
           <div>
-            <span className="text-xs uppercase tracking-widest text-gray-500 font-bold opacity-40">PWA v1.0</span>
+            <span className="text-xs uppercase tracking-widest text-gray-500 dark:text-slate-400 font-bold opacity-40">PWA v1.0</span>
           </div>
         </footer>
       </main>

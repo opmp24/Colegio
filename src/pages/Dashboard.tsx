@@ -72,8 +72,8 @@ export default function Dashboard() {
     return (
       <div className="px-4 py-4">
         <div className="animate-pulse space-y-4">
-          <div className="h-12 bg-slate-200 rounded-xl" />
-          <div className="h-64 bg-slate-200 rounded-xl" />
+          <div className="h-12 bg-slate-200 dark:bg-slate-700 rounded-xl" />
+          <div className="h-64 bg-slate-200 dark:bg-slate-700 rounded-xl" />
         </div>
       </div>
     );
@@ -83,11 +83,11 @@ export default function Dashboard() {
     if (isTeacher) {
       return (
         <div className="max-w-lg mx-auto px-4 py-20 text-center">
-          <svg className="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
-          <h2 className="text-lg font-bold text-slate-700 mb-2">No hay cursos aún</h2>
-          <p className="text-sm text-slate-500 mb-6">Crea tu primer curso para empezar a gestionar actividades.</p>
+          <h2 className="text-lg font-bold text-slate-700 dark:text-slate-300 mb-2">No hay cursos aún</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">Crea tu primer curso para empezar a gestionar actividades.</p>
           <a
             href="/cursos"
             className="inline-block px-6 py-3 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition-colors"
@@ -99,11 +99,11 @@ export default function Dashboard() {
     }
     return (
       <div className="px-4 py-12 text-center">
-        <svg className="w-16 h-16 text-slate-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-16 h-16 text-slate-300 dark:text-slate-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
-        <h2 className="text-lg font-bold text-slate-600 mb-2">Sin cursos asignados</h2>
-        <p className="text-sm text-slate-400">No tienes cursos asignados. Contacta a un administrador.</p>
+        <h2 className="text-lg font-bold text-slate-600 dark:text-slate-300 mb-2">Sin cursos asignados</h2>
+        <p className="text-sm text-slate-400 dark:text-slate-500">No tienes cursos asignados. Contacta a un administrador.</p>
       </div>
     );
   }
@@ -111,15 +111,15 @@ export default function Dashboard() {
   return (
     <div className="px-4 py-4 space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
       {/* Course Selector */}
-      <div className="flex items-center gap-2 bg-white rounded-xl p-3 shadow-sm lg:col-span-2">
+      <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm dark:shadow-slate-900/50 lg:col-span-2">
         <div className="w-2 h-8 rounded-full transition-colors" style={{ backgroundColor: selectedCourse !== "all" ? courses.find((c) => c.id === selectedCourse)?.color ?? "#6366f1" : "#6366f1" }} />
         <div className="flex flex-col flex-1">
-          <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wider" htmlFor="course-select">CURSO</label>
+          <label className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider" htmlFor="course-select">CURSO</label>
           <select
             id="course-select"
             value={selectedCourse}
             onChange={(e) => setSelectedCourse(e.target.value)}
-            className="appearance-none bg-transparent border-none p-0 text-lg font-bold text-slate-800 focus:ring-0 cursor-pointer"
+            className="appearance-none bg-transparent border-none p-0 text-lg font-bold text-slate-800 dark:text-slate-100 focus:ring-0 cursor-pointer"
           >
             <option value="all">{isTeacher ? "Todos los cursos" : "Todos mis cursos"}</option>
             {courses.map((c) => (
@@ -127,13 +127,13 @@ export default function Dashboard() {
             ))}
           </select>
         </div>
-        <svg className="w-4 h-4 text-slate-400 mt-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-slate-400 dark:text-slate-500 mt-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </div>
 
       {/* Calendar */}
-      <section className="bg-white rounded-xl p-4 shadow-sm min-h-[40dvh] lg:min-h-0">
+      <section className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm dark:shadow-slate-900/50 min-h-[40dvh] lg:min-h-0">
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <button
@@ -141,13 +141,13 @@ export default function Dashboard() {
                 if (month === 0) { setMonth(11); setYear(y => y - 1); }
                 else setMonth(m => m - 1);
               }}
-              className="p-1 rounded-lg hover:bg-slate-100 text-slate-500"
+              className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            <h2 className="text-lg font-bold text-slate-800 min-w-[160px] text-center">
+            <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 min-w-[160px] text-center">
               {new Date(year, month).toLocaleDateString("es-CL", { month: "long", year: "numeric" })}
             </h2>
             <button
@@ -155,7 +155,7 @@ export default function Dashboard() {
                 if (month === 11) { setMonth(0); setYear(y => y + 1); }
                 else setMonth(m => m + 1);
               }}
-              className="p-1 rounded-lg hover:bg-slate-100 text-slate-500"
+              className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -175,18 +175,18 @@ export default function Dashboard() {
       {/* Day Events */}
       <section className="lg:row-span-2">
         <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">
+          <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
             {selectedDay === today.getDate() ? "AGENDA DE HOY" : `EVENTOS DEL ${selectedDay}`}
           </h3>
-          <span className="text-xs text-primary-600 font-medium capitalize">{todayFormatted}</span>
+          <span className="text-xs text-primary-600 dark:text-primary-400 font-medium capitalize">{todayFormatted}</span>
         </div>
         <div className="space-y-3">
           {dayEvents.length === 0 ? (
-            <div className="bg-white rounded-xl p-6 shadow-sm text-center">
-              <svg className="w-12 h-12 text-slate-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 shadow-sm dark:shadow-slate-900/50 text-center">
+              <svg className="w-12 h-12 text-slate-300 dark:text-slate-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <p className="text-slate-400 text-sm mb-4">No hay actividades para este día</p>
+              <p className="text-slate-400 dark:text-slate-500 text-sm mb-4">No hay actividades para este día</p>
               {canCreate && (
                 <button
                   onClick={() => navigate(`/crear?date=${selectedDateStr}`)}
@@ -218,7 +218,7 @@ export default function Dashboard() {
                 <div className="flex justify-end pt-2">
                   <button
                     onClick={() => navigate(`/crear?date=${selectedDateStr}`)}
-                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 shadow-lg shadow-primary-100 transition-all active:scale-95"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 shadow-lg shadow-primary-100 dark:shadow-primary-900/30 transition-all active:scale-95"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -234,10 +234,10 @@ export default function Dashboard() {
 
       {/* Próximos eventos */}
       {upcoming && upcoming.length > 0 && (
-        <section className="bg-white rounded-xl p-4 shadow-sm lg:col-span-2">
+        <section className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm dark:shadow-slate-900/50 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest">PRÓXIMOS EVENTOS</h3>
-            <span className="text-[10px] text-slate-400">{upcoming.length} pendientes</span>
+            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">PRÓXIMOS EVENTOS</h3>
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">{upcoming.length} pendientes</span>
           </div>
           <div className="space-y-3">
             {upcoming.map((ev) => {

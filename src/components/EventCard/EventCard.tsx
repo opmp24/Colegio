@@ -22,11 +22,11 @@ export default function EventCard({ event, courseColor, courseName, subjectName,
   const color = courseColor ?? "#6366f1";
 
   return (
-    <article className="bg-white rounded-xl p-4 shadow-sm border-l-4" style={{ borderLeftColor: color }}>
+    <article className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border-l-4" style={{ borderLeftColor: color }}>
       <div className="flex justify-between items-start mb-1">
         <div>
           {(subjectName || courseName) && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 uppercase bg-slate-50 px-2 py-0.5 rounded">
+            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase bg-slate-50 dark:bg-slate-700 px-2 py-0.5 rounded">
               {courseName && <span>{courseName}</span>}
               {courseName && subjectName && <span>·</span>}
               {subjectIcon && <span>{subjectIcon}</span>}
@@ -39,12 +39,12 @@ export default function EventCard({ event, courseColor, courseName, subjectName,
               backgroundColor: `${color}15`,
             }}>{typeLabels[event.type] ?? event.type}</span>
           )}
-          <h4 className="text-base font-bold text-slate-800 mt-1">{event.title}</h4>
+          <h4 className="text-base font-bold text-slate-800 dark:text-slate-100 mt-1">{event.title}</h4>
         </div>
-        <span className="text-xs font-semibold text-slate-400 whitespace-nowrap">{timeStr}</span>
+        <span className="text-xs font-semibold text-slate-400 dark:text-slate-500 whitespace-nowrap">{timeStr}</span>
       </div>
       {event.description && (
-        <p className="text-sm text-slate-600 mt-1 line-clamp-2">{event.description}</p>
+        <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 line-clamp-2">{event.description}</p>
       )}
     </article>
   );

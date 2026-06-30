@@ -22,7 +22,7 @@ export default function CalendarGrid({ year, month, events, selectedDay, onSelec
     <div>
       <div className="grid grid-cols-7 text-center mb-2">
         {DAYS.map((d) => (
-          <div key={d} className="text-[10px] font-bold text-slate-400 uppercase py-1">{d}</div>
+          <div key={d} className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase py-1">{d}</div>
         ))}
       </div>
       <div className="grid grid-cols-7 gap-y-1">
@@ -36,7 +36,7 @@ export default function CalendarGrid({ year, month, events, selectedDay, onSelec
               key={day}
               onClick={() => onSelectDay(day)}
               className={`h-10 flex flex-col items-center justify-center rounded-lg text-sm transition-colors relative ${
-                isSelected ? "bg-primary-600 text-white font-bold" : "hover:bg-slate-100"
+                isSelected ? "bg-primary-600 text-white font-bold" : "hover:bg-slate-100 dark:hover:bg-slate-700"
               }`}
             >
               <span>{day}</span>
