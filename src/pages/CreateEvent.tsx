@@ -5,6 +5,7 @@ import { useUserCourses } from "@/hooks/useUserCourses";
 import { useSubjects } from "@/hooks/useSubjects";
 import { useCreateEvent } from "@/hooks/useEvents";
 import { useAuth } from "@/context/AuthContext";
+import { useToast } from "@/hooks/useToast";
 
 const eventTypes = [
   { value: "test", label: "Prueba" },
@@ -22,6 +23,7 @@ export default function CreateEvent() {
   const { data: userCourses } = useUserCourses();
   const { data: subjects } = useSubjects();
   const createEvent = useCreateEvent();
+  const toast = useToast();
   const dateParam = useMemo(() => {
     const d = searchParams.get("date");
     if (!d) return "";
@@ -53,9 +55,10 @@ export default function CreateEvent() {
         due_date: new Date(form.due_date).toISOString(),
         created_by: profile.id,
       });
+      toast.success("Actividad creada correctamente");
       navigate("/");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al crear actividad");
+      toast.error(err instanceof Error ? err.message : "Error al crear actividad");
     }
   };
 

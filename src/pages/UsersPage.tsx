@@ -6,6 +6,7 @@ import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/context/AuthContext";
 import { useCourses } from "@/hooks/useCourses";
 import type { UserRole } from "@/types";
+import { useToast } from "@/hooks/useToast";
 
 const roleConfig: Record<UserRole, { label: string; color: string }> = {
   admin: { label: "Admin", color: "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30" },
@@ -19,6 +20,7 @@ export default function UsersPage() {
   const updateProfile = useUpdateProfile();
   const admin = useAdminAuth();
   const { data: courses } = useCourses();
+  const toast = useToast();
 
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
@@ -57,7 +59,7 @@ export default function UsersPage() {
       await admin.updateCourses(userId, next);
       refetchCourseMembers();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al actualizar cursos");
+      toast.error(err instanceof Error ? err.message : "Error al actualizar cursos");
     }
   };
 
@@ -74,8 +76,9 @@ export default function UsersPage() {
       setRole("usuario");
       setCourseIds([]);
       refetch();
+      toast.success("Usuario creado correctamente");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al crear usuario");
+      toast.error(err instanceof Error ? err.message : "Error al crear usuario");
     } finally {
       setCreating(false);
     }
@@ -86,13 +89,14 @@ export default function UsersPage() {
   };
 
   const handleResetPin = async (userId: string) => {
-    if (!confirm("¿Generar un nuevo código para este usuario?")) return;
+    if (!window.confirm("¿Generar un nuevo código para este usuario?")) return;
     try {
       const result = await admin.resetPin(userId);
       setNewPin(result.pin);
       refetch();
+      toast.success("Nuevo código generado");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al resetear código");
+      toast.error(err instanceof Error ? err.message : "Error al resetear código");
     }
   };
 
@@ -100,27 +104,29 @@ export default function UsersPage() {
     try {
       await admin.toggleBlock(userId);
       refetch();
+      toast.success("Estado actualizado");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al cambiar estado");
+      toast.error(err instanceof Error ? err.message : "Error al cambiar estado");
     }
   };
 
   const handleDelete = async (userId: string) => {
-    if (!confirm("¿Eliminar este usuario permanentemente? No se puede deshacer.")) return;
+    if (!window.confirm("¿Eliminar este usuario permanentemente? No se puede deshacer.")) return;
     try {
       await admin.deleteUser(userId);
       refetch();
+      toast.success("Usuario eliminado");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al eliminar usuario");
+      toast.error(err instanceof Error ? err.message : "Error al eliminar usuario");
     }
   };
 
   const handleSendInfo = async (userId: string) => {
     try {
       await admin.sendInfo(userId);
-      alert("Información enviada al correo del usuario.");
+      toast.success("Información enviada al correo del usuario");
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al enviar email");
+      toast.error(err instanceof Error ? err.message : "Error al enviar email");
     }
   };
 
@@ -136,7 +142,7 @@ export default function UsersPage() {
       await admin.updatePermissions(userId, next);
       refetch();
     } catch (err) {
-      alert(err instanceof Error ? err.message : "Error al actualizar permisos");
+      toast.error(err instanceof Error ? err.message : "Error al actualizar permisos");
     }
   };
 
