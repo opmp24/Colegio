@@ -8,7 +8,8 @@ PWA informativa para apoderados y alumnos de un colegio, organizada por curso. P
 - **Idioma:** Español (código, comentarios, UI, commits)
 - **Repo:** `https://github.com/opmp24/Colegio`
 - **Supabase:** Credenciales en `/secrets/keys` (no committear)
-- **Deploy:** Manual: build local + commit `docs/` en `develop`, merge a `main`, push. GitHub Pages sirve desde `docs/` en `main`.
+- **Deploy:** Automático via Netlify al pushear a `main`. Build command: `npm run build`, publish dir: `docs`. Sin CI local, sin commit de `docs/`.
+- **Dominio:** `https://kurzo.netlify.app`
 
 ## Commands
 

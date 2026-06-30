@@ -10,15 +10,15 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      base: "/Colegio/",
+  base: "/",
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "icon-192.png", "icon-512.png"],
       manifest: {
         name: "Agenda Escolar",
         short_name: "Agenda",
         description: "Calendario académico y agenda de actividades escolares",
-        start_url: "/Colegio/",
-        scope: "/Colegio/",
+        start_url: "/",
+        scope: "/",
         theme_color: "#6366f1",
         background_color: "#f8fafc",
         display: "standalone",
