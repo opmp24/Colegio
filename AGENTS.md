@@ -8,7 +8,7 @@ PWA informativa para apoderados y alumnos de un colegio, organizada por curso. P
 - **Idioma:** Español (código, comentarios, UI, commits)
 - **Repo:** `https://github.com/opmp24/Colegio`
 - **Supabase:** Credenciales en `/secrets/keys` (no committear)
-- **Deploy:** Automático via GitHub Actions al pushear a `main`. NO usa rama `gh-pages`. Solo se commitea `docs/` al merge a `main` (NO en develop).
+- **Deploy:** Manual: build local + commit `docs/` en `develop`, merge a `main`, push. GitHub Pages sirve desde `docs/` en `main`.
 
 ## Commands
 
@@ -218,8 +218,8 @@ src/
 14. siempre que solicites crear algo en supabase verifica si tienes permisos para hacerlo
 15. cuando el usuario diga que una versión es estable, crear un tag en git con formato `v<major>.<minor>.<patch>` (ej: v1.0.0, v1.1.0) en la rama `main` y pushearlo
 16. usar prioritariamente `codegraph_explore` como primera herramienta para entender flujos de código (en vez de grep/read múltiples)
-17. NO commitear `docs/` durante el desarrollo en `develop` — solo buildear y commitear `docs/` al merge a `main`
+17. todo el flujo pasa por develop: commitear, buildear docs/, commitear docs/, mergear a main, pushear main. Sin commits directos a main.
 18. antes de editar código, verificar el flujo con codegraph_explore y leer solo el snippet necesario (no archivos completos)
 19. paralelizar tool calls siempre que sea posible (lecturas, búsquedas, comandos independientes)
 20. no leer archivos ya vistos en la misma sesión — codegraph_explore ya los tiene en contexto
-22. siempre usar `codegraph_explore` como primera herramienta para entender flujos de código, en lugar de `read`/`grep`/`glob`
+21. siempre usar `codegraph_explore` como primera herramienta para entender flujos de código, en lugar de `read`/`grep`/`glob`
