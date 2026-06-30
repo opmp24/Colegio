@@ -5,12 +5,12 @@ import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 
 export default defineConfig({
-  base: "/Colegio/",
+  base: "/",
   build: { outDir: "docs" },
   plugins: [
     react(),
     VitePWA({
-  base: "/",
+      base: "/",
       registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "icon-192.png", "icon-512.png"],
       manifest: {
