@@ -94,7 +94,10 @@ export default function SettingsPage() {
       </section>
 
       {/* Instalar App */}
-      <InstallButton variant="full" />
+      <section className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm dark:shadow-slate-900/50">
+        <h2 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Instalar App</h2>
+        <InstallButton variant="full" />
+      </section>
 
       {/* Cerrar sesión */}
       <button
