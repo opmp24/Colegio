@@ -222,4 +222,5 @@ src/
 18. antes de editar código, verificar el flujo con codegraph_explore y leer solo el snippet necesario (no archivos completos)
 19. paralelizar tool calls siempre que sea posible (lecturas, búsquedas, comandos independientes)
 20. no leer archivos ya vistos en la misma sesión — codegraph_explore ya los tiene en contexto
-21. NO commitear `docs/` en `develop` — agregar `docs/` a `.gitignore` global. Solo se genera y commitea `docs/` al mergear a `main`
+21. NO commitear `docs/` en `develop` — agregar `docs/` a `.gitignore` global. Solo se genera y commitea `docs/` al mergear a `main`22. siempre usar  como primera herramienta para entender flujos de código, en lugar de //
+22. siempre usar `codegraph_explore` como primera herramienta para entender flujos de código, en lugar de `read`/`grep`/`glob`
