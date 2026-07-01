@@ -240,7 +240,7 @@ export default function LoginPage() {
         <footer className="mt-12 text-center space-y-2">
           <InstallButton variant="compact" />
           <div>
-            <span className="text-xs uppercase tracking-widest text-gray-500 dark:text-slate-400 font-bold opacity-40">PWA v1.0</span>
+            <span className="text-xs uppercase tracking-widest text-gray-500 dark:text-slate-400 font-bold opacity-40">PWA v1.1</span>
           </div>
         </footer>
       </main>
