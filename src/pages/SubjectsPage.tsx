@@ -4,6 +4,8 @@ import { useSubjects, useCreateSubject, useUpdateSubject, useDeleteSubject } fro
 import { useConfirm } from "@/hooks/useConfirm";
 import type { Subject } from "@/types";
 
+const EMOJIS = ["📚", "📐", "🔬", "🌍", "📖", "🎨", "🎵", "⚽", "💻", "🧮", "🔤", "🧪", "📜", "🗣️", "🧠"];
+
 export default function SubjectsPage() {
   const { data: courses } = useCourses();
   const { data: subjects, isLoading } = useSubjects();

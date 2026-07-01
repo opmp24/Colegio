@@ -3,20 +3,39 @@ import { useMemo } from "react";
 interface CalendarGridProps {
   year: number;
   month: number;
+  view: "month" | "week";
+  weekStart?: Date;
   events: Record<string, { color: string }[]>;
-  selectedDay: number | null;
-  onSelectDay: (day: number) => void;
+  selectedDate: string | null;
+  onSelectDate: (date: string) => void;
 }
 
 const DAYS = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
 
-export default function CalendarGrid({ year, month, events, selectedDay, onSelectDay }: CalendarGridProps) {
-  const days = useMemo(() => {
-    const totalDays = new Date(year, month + 1, 0).getDate();
-    return Array.from({ length: totalDays }, (_, i) => i + 1);
-  }, [year, month]);
+function fmt(y: number, m: number, d: number) {
+  return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
 
-  const pad = useMemo(() => Array.from({ length: new Date(year, month, 1).getDay() }, () => null), [year, month]);
+export default function CalendarGrid({ year, month, view, weekStart, events, selectedDate, onSelectDate }: CalendarGridProps) {
+  const days = useMemo(() => {
+    if (view === "week" && weekStart) {
+      return Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(weekStart);
+        d.setDate(d.getDate() + i);
+        return { day: d.getDate(), dateKey: fmt(d.getFullYear(), d.getMonth(), d.getDate()) };
+      });
+    }
+    const totalDays = new Date(year, month + 1, 0).getDate();
+    return Array.from({ length: totalDays }, (_, i) => ({
+      day: i + 1,
+      dateKey: fmt(year, month, i + 1),
+    }));
+  }, [view, weekStart, year, month]);
+
+  const pad = useMemo(() => {
+    if (view === "week") return [];
+    return Array.from({ length: new Date(year, month, 1).getDay() }, () => null);
+  }, [view, year, month]);
 
   return (
     <div>
@@ -27,14 +46,13 @@ export default function CalendarGrid({ year, month, events, selectedDay, onSelec
       </div>
       <div className="grid grid-cols-7 gap-y-1">
         {pad.map((_, i) => <div key={`pad-${i}`} />)}
-        {days.map((day) => {
-          const key = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-          const dayEvents = events[key] ?? [];
-          const isSelected = selectedDay === day;
+        {days.map(({ day, dateKey }) => {
+          const dayEvents = events[dateKey] ?? [];
+          const isSelected = selectedDate === dateKey;
           return (
             <button
-              key={day}
-              onClick={() => onSelectDay(day)}
+              key={dateKey}
+              onClick={() => onSelectDate(dateKey)}
               className={`h-10 flex flex-col items-center justify-center rounded-lg text-sm transition-colors relative ${
                 isSelected ? "bg-primary-600 text-white font-bold" : "hover:bg-slate-100 dark:hover:bg-slate-700"
               }`}
@@ -54,5 +72,3 @@ export default function CalendarGrid({ year, month, events, selectedDay, onSelec
     </div>
   );
 }
-
-

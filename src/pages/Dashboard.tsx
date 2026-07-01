@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useEvents, useUpcomingEvents } from "@/hooks/useEvents";
 import { useCourses } from "@/hooks/useCourses";
@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 import CalendarGrid from "@/components/Calendar/CalendarGrid";
 import EventCard from "@/components/EventCard/EventCard";
 import EventDetailModal from "@/components/EventDetailModal/EventDetailModal";
+import gsap from "gsap";
 import type { Subject, Event } from "@/types";
 
 export default function Dashboard() {
@@ -30,9 +31,57 @@ export default function Dashboard() {
   const { data: upcoming } = useUpcomingEvents(isTeacher ? 5 : 10, courseIds);
 
   const today = useMemo(() => new Date(), []);
+  const fmtDate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
   const [year, setYear] = useState(() => today.getFullYear());
   const [month, setMonth] = useState(() => today.getMonth());
-  const [selectedDay, setSelectedDay] = useState<number | null>(today.getDate());
+  const [selectedDate, setSelectedDate] = useState<string>(fmtDate(today));
+  const [viewMode, setViewMode] = useState<"month" | "week">("month");
+  const touchStartX = useRef(0);
+
+  const weekStart = useMemo(() => {
+    if (viewMode !== "week") return today;
+    const d = new Date(selectedDate + "T12:00:00");
+    d.setDate(d.getDate() - d.getDay());
+    return d;
+  }, [viewMode, selectedDate]);
+
+  const goToPrev = () => {
+    if (viewMode === "week") {
+      const d = new Date(weekStart);
+      d.setDate(d.getDate() - 7);
+      setSelectedDate(fmtDate(d));
+    } else {
+      if (month === 0) { setMonth(11); setYear(y => y - 1); }
+      else setMonth(m => m - 1);
+    }
+  };
+
+  const goToNext = () => {
+    if (viewMode === "week") {
+      const d = new Date(weekStart);
+      d.setDate(d.getDate() + 7);
+      setSelectedDate(fmtDate(d));
+    } else {
+      if (month === 11) { setMonth(0); setYear(y => y + 1); }
+      else setMonth(m => m + 1);
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(delta) > 50) {
+      if (delta > 0) goToPrev();
+      else goToNext();
+    }
+  };
+
+  const todayStr = fmtDate(today);
+  const isTodaySelected = selectedDate === todayStr;
 
   const subjectMap = useMemo(() => {
     const map = new Map<string, Subject>();
@@ -52,13 +101,9 @@ export default function Dashboard() {
     return map;
   }, [events, subjectMap]);
 
-  const selectedDateStr = selectedDay
-    ? `${year}-${String(month + 1).padStart(2, "0")}-${String(selectedDay).padStart(2, "0")}`
-    : "";
-
   const dayEvents = useMemo(
-    () => (events ?? []).filter((ev) => ev.due_date.startsWith(selectedDateStr)),
-    [events, selectedDateStr]
+    () => (events ?? []).filter((ev) => ev.due_date.startsWith(selectedDate)),
+    [events, selectedDate]
   );
 
   const todayFormatted = today.toLocaleDateString("es-CL", {
@@ -68,6 +113,15 @@ export default function Dashboard() {
   });
 
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const sections = containerRef.current?.querySelectorAll("section");
+    if (sections) {
+      gsap.fromTo(sections, { autoAlpha: 0, y: 20 }, { autoAlpha: 1, y: 0, duration: 0.5, stagger: 0.1, ease: "power2.out" });
+    }
+  }, []);
 
   const canCreate = profile?.role !== "usuario" || profile?.permissions?.includes("eventos");
 
@@ -112,7 +166,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="px-4 py-4 space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
+    <div ref={containerRef} className="px-4 py-4 space-y-4 lg:grid lg:grid-cols-2 lg:gap-6 lg:space-y-0">
       {/* Course Selector */}
       <div className="flex items-center gap-2 bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm dark:shadow-slate-900/50 lg:col-span-2">
         <div className="w-2 h-8 rounded-full transition-colors" style={{ backgroundColor: selectedCourse !== "all" ? courses.find((c) => c.id === selectedCourse)?.color ?? "#6366f1" : "#6366f1" }} />
@@ -136,42 +190,44 @@ export default function Dashboard() {
       </div>
 
       {/* Calendar */}
-      <section className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm dark:shadow-slate-900/50 min-h-[40dvh] lg:min-h-0">
+      <section
+        className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm dark:shadow-slate-900/50 min-h-[40dvh] lg:min-h-0 touch-pan-y"
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+      >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => {
-                if (month === 0) { setMonth(11); setYear(y => y - 1); }
-                else setMonth(m => m - 1);
-              }}
-              className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400"
-            >
+            <button onClick={goToPrev} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 min-w-[160px] text-center">
-              {new Date(year, month).toLocaleDateString("es-CL", { month: "long", year: "numeric" })}
+              {viewMode === "week"
+                ? `${weekStart.toLocaleDateString("es-CL", { day: "numeric", month: "short" })} - ${new Date(weekStart.getTime() + 6 * 86400000).toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric" })}`
+                : new Date(year, month).toLocaleDateString("es-CL", { month: "long", year: "numeric" })}
             </h2>
-            <button
-              onClick={() => {
-                if (month === 11) { setMonth(0); setYear(y => y + 1); }
-                else setMonth(m => m + 1);
-              }}
-              className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400"
-            >
+            <button onClick={goToNext} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
           </div>
+          <button
+            onClick={() => setViewMode(viewMode === "month" ? "week" : "month")}
+            className="px-3 py-1 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          >
+            {viewMode === "month" ? "Semana" : "Mes"}
+          </button>
         </div>
         <CalendarGrid
           year={year}
           month={month}
+          view={viewMode}
+          weekStart={weekStart}
           events={eventsByDate}
-          selectedDay={selectedDay}
-          onSelectDay={setSelectedDay}
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
         />
       </section>
 
@@ -179,7 +235,7 @@ export default function Dashboard() {
       <section className="lg:row-span-2">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
-            {selectedDay === today.getDate() ? "AGENDA DE HOY" : `EVENTOS DEL ${selectedDay}`}
+            {isTodaySelected ? "AGENDA DE HOY" : `EVENTOS DEL ${selectedDate.split("-").pop()}`}
           </h3>
           <span className="text-xs text-primary-600 dark:text-primary-400 font-medium capitalize">{todayFormatted}</span>
         </div>
@@ -192,7 +248,7 @@ export default function Dashboard() {
               <p className="text-slate-400 dark:text-slate-500 text-sm mb-4">No hay actividades para este día</p>
               {canCreate && (
                 <button
-                  onClick={() => navigate(`/crear?date=${selectedDateStr}`)}
+                  onClick={() => navigate(`/crear?date=${selectedDate}`)}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -221,7 +277,7 @@ export default function Dashboard() {
               {canCreate && (
                 <div className="flex justify-end pt-2">
                   <button
-                    onClick={() => navigate(`/crear?date=${selectedDateStr}`)}
+                    onClick={() => navigate(`/crear?date=${selectedDate}`)}
                     className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 shadow-lg shadow-primary-100 dark:shadow-primary-900/30 transition-all active:scale-95"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

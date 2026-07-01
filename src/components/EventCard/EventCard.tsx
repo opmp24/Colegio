@@ -1,3 +1,5 @@
+import { useRef, useEffect } from "react";
+import gsap from "gsap";
 import type { Event } from "@/types";
 
 interface EventCardProps {
@@ -18,12 +20,19 @@ const typeLabels: Record<string, string> = {
 };
 
 export default function EventCard({ event, courseColor, courseName, subjectName, subjectIcon, onClick }: EventCardProps) {
+  const ref = useRef<HTMLElement>(null);
   const date = new Date(event.due_date);
   const timeStr = date.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
   const color = courseColor ?? "#6366f1";
 
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    gsap.fromTo(ref.current, { autoAlpha: 0, y: 12 }, { autoAlpha: 1, y: 0, duration: 0.4, ease: "power2.out" });
+  }, []);
+
   return (
     <article
+      ref={ref}
       className={`bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm border border-gray-200 dark:border-slate-700 border-l-4 ${onClick ? "cursor-pointer hover:shadow-md transition-shadow" : ""}`}
       style={{ borderLeftColor: color }}
       onClick={onClick}
