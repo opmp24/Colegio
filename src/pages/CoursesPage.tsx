@@ -1,12 +1,14 @@
 import { useState } from "react";
 import { useCourses, useCreateCourse, useUpdateCourse, useDeleteCourse } from "@/hooks/useCourses";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useToast } from "@/hooks/useToast";
 
 export default function CoursesPage() {
   const { data: courses, isLoading } = useCourses();
   const createCourse = useCreateCourse();
   const updateCourse = useUpdateCourse();
   const deleteCourse = useDeleteCourse();
+  const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", grade: "", section: "", color: "#6366f1" });
@@ -20,12 +22,18 @@ export default function CoursesPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editing) {
-      await updateCourse.mutateAsync({ id: editing, ...form });
-    } else {
-      await createCourse.mutateAsync(form);
+    try {
+      if (editing) {
+        await updateCourse.mutateAsync({ id: editing, ...form });
+        toast.success("Curso actualizado correctamente");
+      } else {
+        await createCourse.mutateAsync(form);
+        toast.success("Curso creado correctamente");
+      }
+      resetForm();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al guardar curso");
     }
-    resetForm();
   };
 
   const handleEdit = (c: { id: string; name: string; grade: string; section: string; color: string }) => {
@@ -95,7 +103,13 @@ export default function CoursesPage() {
               <button
                 onClick={async () => {
                   const ok = await confirmDelete({ title: "Eliminar curso", message: "¿Estás seguro de eliminar este curso?", variant: "danger" });
-                  if (ok) deleteCourse.mutate(c.id);
+                  if (!ok) return;
+                  try {
+                    await deleteCourse.mutateAsync(c.id);
+                    toast.success("Curso eliminado correctamente");
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "Error al eliminar curso");
+                  }
                 }}
                 className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors"
               >

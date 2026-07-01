@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useCourses } from "@/hooks/useCourses";
 import { useSubjects, useCreateSubject, useUpdateSubject, useDeleteSubject } from "@/hooks/useSubjects";
 import { useConfirm } from "@/hooks/useConfirm";
+import { useToast } from "@/hooks/useToast";
 import type { Subject } from "@/types";
 
 const EMOJIS = ["📚", "📐", "🔬", "🌍", "📖", "🎨", "🎵", "⚽", "💻", "🧮", "🔤", "🧪", "📜", "🗣️", "🧠"];
@@ -12,6 +13,7 @@ export default function SubjectsPage() {
   const createSubject = useCreateSubject();
   const updateSubject = useUpdateSubject();
   const deleteSubject = useDeleteSubject();
+  const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState({ course_id: "", name: "", profesor_name: "", color: "#6366f1", icon: "📚" });
@@ -25,12 +27,18 @@ export default function SubjectsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (editing) {
-      await updateSubject.mutateAsync({ id: editing, ...form });
-    } else {
-      await createSubject.mutateAsync(form);
+    try {
+      if (editing) {
+        await updateSubject.mutateAsync({ id: editing, ...form });
+        toast.success("Asignatura actualizada correctamente");
+      } else {
+        await createSubject.mutateAsync(form);
+        toast.success("Asignatura creada correctamente");
+      }
+      resetForm();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al guardar asignatura");
     }
-    resetForm();
   };
 
   const handleEdit = (s: Subject) => {
@@ -133,7 +141,13 @@ export default function SubjectsPage() {
               <button
                 onClick={async () => {
                   const ok = await confirmDelete({ title: "Eliminar asignatura", message: "¿Estás seguro de eliminar esta asignatura?", variant: "danger" });
-                  if (ok) deleteSubject.mutate(s.id);
+                  if (!ok) return;
+                  try {
+                    await deleteSubject.mutateAsync(s.id);
+                    toast.success("Asignatura eliminada correctamente");
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "Error al eliminar asignatura");
+                  }
                 }}
                 className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors"
               >
