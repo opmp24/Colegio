@@ -36,6 +36,21 @@ function RedirectHandler() {
 }
 
 function App() {
+  useEffect(() => {
+    const onFocusIn = (e: FocusEvent) => {
+      if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement || e.target instanceof HTMLSelectElement) {
+        document.documentElement.classList.add("keyboard-open");
+      }
+    };
+    const onFocusOut = () => document.documentElement.classList.remove("keyboard-open");
+    document.addEventListener("focusin", onFocusIn);
+    document.addEventListener("focusout", onFocusOut);
+    return () => {
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("focusout", onFocusOut);
+    };
+  }, []);
+
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter basename={import.meta.env.BASE_URL.replace(/\/$/, "")}>

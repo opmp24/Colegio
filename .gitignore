@@ -13,3 +13,6 @@ nul
 test-results/
 playwright-report/
 /local/
+
+# Local Netlify folder
+.netlify

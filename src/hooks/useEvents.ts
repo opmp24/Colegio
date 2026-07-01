@@ -46,13 +46,60 @@ export function useUpcomingEvents(limit = 5, courseIds?: string[]) {
 
 export function useCreateEvent() {
   const qc = useQueryClient();
+
   return useMutation({
-    mutationFn: async (event: any) => {
+    mutationFn: async (event: Omit<Event, "id" | "created_at" | "created_by"> & Partial<Pick<Event, "id" | "created_at" | "created_by">>) => {
       const { data, error } = await db.from("events").insert(event).select().single();
       if (error) throw error;
       return data;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["events"] }),
+    onMutate: async (newEvent: any) => {
+      // Cancel any outgoing refetches to avoid overwriting our optimistic update
+      await qc.cancelQueries({ queryKey: ["events"] });
+
+      // Snapshot the previous value
+      const previousEvents = qc.getQueryData<Event[]>(["events"]) ?? [];
+
+      // Create a temporary ID for the optimistic record
+      const tempId = `temp-${Date.now()}`;
+      const optimisticEvent: Event = {
+        id: tempId,
+        course_id: newEvent.course_id,
+        subject_id: newEvent.subject_id ?? null,
+        title: newEvent.title,
+        description: newEvent.description ?? null,
+        type: newEvent.type,
+        due_date: newEvent.due_date,
+        created_by: newEvent.created_by ?? "",
+        created_at: new Date().toISOString(), // temporary
+        courses: undefined,
+      };
+
+      // Optimistically update to the new array
+      qc.setQueryData<Event[]>(["events"], (old = []) => [...old, optimisticEvent]);
+
+      // Return a context object with the snapshot and tempId
+      return { previousEvents, tempId };
+    },
+    onError: (_err, _variables, context) => {
+      // Rollback to the previous data
+      if (context?.previousEvents !== undefined) {
+        qc.setQueryData<Event[]>(["events"], context.previousEvents);
+      }
+    },
+    onSuccess: (_data, _variables, context) => {
+      // Replace the optimistic temporary ID with the real ID from the server
+      if (context?.tempId) {
+        qc.setQueryData<Event[]>(["events"], (old = []) =>
+          old.map((item) => (item.id === context.tempId ? _data : item))
+        );
+      }
+    },
+    // Optionally, refetch after mutation to ensure server state
+    onSettled: () => {
+      // refetch to be safe
+      qc.invalidateQueries({ queryKey: ["events"] });
+    },
   });
 }
 

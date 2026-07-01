@@ -7,6 +7,7 @@ import { useAuth } from "@/context/AuthContext";
 import { useCourses } from "@/hooks/useCourses";
 import type { UserRole } from "@/types";
 import { useToast } from "@/hooks/useToast";
+import { useCreateUser } from "@/hooks/useCreateUser";
 
 const roleConfig: Record<UserRole, { label: string; color: string }> = {
   admin: { label: "Admin", color: "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30" },
@@ -21,6 +22,7 @@ export default function UsersPage() {
   const admin = useAdminAuth();
   const { data: courses } = useCourses();
   const toast = useToast();
+  const createUserMutation = useCreateUser();
 
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
@@ -28,7 +30,6 @@ export default function UsersPage() {
   const [role, setRole] = useState<UserRole>("usuario");
   const [courseIds, setCourseIds] = useState<string[]>([]);
   const [newPin, setNewPin] = useState<string | null>(null);
-  const [creating, setCreating] = useState(false);
   const [expandedCourses, setExpandedCourses] = useState<string | null>(null);
 
   const { data: courseMembers, refetch: refetchCourseMembers } = useQuery({
@@ -67,20 +68,21 @@ export default function UsersPage() {
 
   const handleCreate = async () => {
     if (!name || !email) return;
-    setCreating(true);
     try {
-      const result = await admin.createUser({ full_name: name, email, role, course_ids: courseIds.length ? courseIds : undefined });
+      const result = await createUserMutation.mutateAsync({
+        full_name: name,
+        email,
+        role,
+        course_ids: courseIds.length ? courseIds : undefined,
+      });
       setNewPin(result.pin);
       setName("");
       setEmail("");
       setRole("usuario");
       setCourseIds([]);
-      refetch();
       toast.success("Usuario creado correctamente");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error al crear usuario");
-    } finally {
-      setCreating(false);
     }
   };
 
@@ -150,14 +152,14 @@ export default function UsersPage() {
     <div className="px-4 py-4 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Gestión de Usuarios</h1>
-        {isAdmin && (
-          <button
-            onClick={() => setShowForm(!showForm)}
-            className="text-sm font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
-          >
-            {showForm ? "Cancelar" : "+ Nuevo"}
-          </button>
-        )}
+{isAdmin && (
+            <button
+              onClick={() => setShowForm(!showForm)}
+              className="px-4 py-2 bg-primary-600 text-white font-medium rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300 dark:bg-primary-500 dark:hover:bg-primary-600 dark:focus:ring-primary-800"
+            >
+              {showForm ? "Cancelar" : "+ Nuevo"}
+            </button>
+          )}
       </div>
 
       {newPin && (
@@ -230,10 +232,10 @@ export default function UsersPage() {
           )}
           <button
             onClick={handleCreate}
-            disabled={creating || !name || !email}
+            disabled={createUserMutation.isPending || !name || !email}
             className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-semibold py-3 rounded-xl transition-all"
           >
-            {creating ? "Creando..." : "Crear usuario"}
+            {createUserMutation.isPending ? "Creando..." : "Crear usuario"}
           </button>
         </section>
       )}
