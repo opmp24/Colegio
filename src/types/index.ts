@@ -15,6 +15,8 @@ export interface Profile {
   pin: string | null;
   is_blocked: boolean | null;
   avatar_url: string | null;
+  avatar_icon: string;
+  avatar_color: string;
   created_at: string;
   permissions: string[] | null;
 }

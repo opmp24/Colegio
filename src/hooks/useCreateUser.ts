@@ -33,6 +33,8 @@ export function useCreateUser() {
         pin: "PENDING",
         is_blocked: false,
         avatar_url: null,
+        avatar_icon: "",
+        avatar_color: "#6366f1",
         created_at: new Date().toISOString(),
         permissions: [],
       };
@@ -63,6 +65,8 @@ export function useCreateUser() {
                   full_name: variables.full_name,
                   email: variables.email,
                   role: variables.role,
+                  avatar_icon: "",
+                  avatar_color: "#6366f1",
                 }
               : user
           )

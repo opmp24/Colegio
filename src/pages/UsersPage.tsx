@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useConfirm } from "@/hooks/useConfirm";
 import { useQuery } from "@tanstack/react-query";
 import { db } from "@/lib/db";
 import { useProfiles, useUpdateProfile } from "@/hooks/useProfiles";
@@ -8,11 +9,12 @@ import { useCourses } from "@/hooks/useCourses";
 import type { UserRole } from "@/types";
 import { useToast } from "@/hooks/useToast";
 import { useCreateUser } from "@/hooks/useCreateUser";
+import Avatar from "@/components/Avatar/Avatar";
 
 const roleConfig: Record<UserRole, { label: string; color: string }> = {
   admin: { label: "Admin", color: "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30" },
   profesor: { label: "Profesor", color: "text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-900/30" },
-  usuario: { label: "Usuario", color: "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30" },
+  usuario: { label: "Alumno", color: "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30" },
 };
 
 export default function UsersPage() {
@@ -23,6 +25,7 @@ export default function UsersPage() {
   const { data: courses } = useCourses();
   const toast = useToast();
   const createUserMutation = useCreateUser();
+  const { confirm, dialog: confirmDialog } = useConfirm();
 
   const [showForm, setShowForm] = useState(false);
   const [name, setName] = useState("");
@@ -91,7 +94,8 @@ export default function UsersPage() {
   };
 
   const handleResetPin = async (userId: string) => {
-    if (!window.confirm("¿Generar un nuevo código para este usuario?")) return;
+    const ok = await confirm({ title: "Resetear código", message: "¿Generar un nuevo código para este usuario?", confirmLabel: "Resetear", variant: "danger" });
+    if (!ok) return;
     try {
       const result = await admin.resetPin(userId);
       setNewPin(result.pin);
@@ -113,7 +117,8 @@ export default function UsersPage() {
   };
 
   const handleDelete = async (userId: string) => {
-    if (!window.confirm("¿Eliminar este usuario permanentemente? No se puede deshacer.")) return;
+    const ok = await confirm({ title: "Eliminar usuario", message: "¿Eliminar este usuario permanentemente? No se puede deshacer.", confirmLabel: "Eliminar", variant: "danger" });
+    if (!ok) return;
     try {
       await admin.deleteUser(userId);
       refetch();
@@ -202,7 +207,7 @@ export default function UsersPage() {
             onChange={(e) => setRole(e.target.value as UserRole)}
             className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:border-primary-500 focus:ring focus:ring-primary-200"
           >
-            <option value="usuario">Usuario</option>
+            <option value="usuario">Alumno</option>
             <option value="profesor">Profesor</option>
             <option value="admin">Admin</option>
           </select>
@@ -240,6 +245,7 @@ export default function UsersPage() {
         </section>
       )}
 
+      {confirmDialog}
       {isLoading ? (
         <div className="text-center py-8 text-slate-400 dark:text-slate-500">Cargando usuarios...</div>
       ) : (
@@ -249,9 +255,7 @@ export default function UsersPage() {
             return (
               <div key={p.id} className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm dark:shadow-slate-900/50">
                 <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold text-sm shrink-0">
-                    {p.full_name.charAt(0).toUpperCase()}
-                  </div>
+                  <Avatar full_name={p.full_name} icon={p.avatar_icon} color={p.avatar_color} size="md" />
                   <div className="flex-1 min-w-0">
                     <p className="font-bold text-slate-800 dark:text-slate-100 truncate">{p.full_name}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{p.email ?? "Sin email"}</p>

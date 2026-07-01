@@ -43,7 +43,7 @@ export default function CalendarGrid({ year, month, events, selectedDay, onSelec
               {dayEvents.length > 0 && (
                 <div className="flex gap-0.5 mt-0.5">
                   {dayEvents.slice(0, 3).map((e, i) => (
-                    <span key={i} className="w-1 h-1 rounded-full" style={{ backgroundColor: e.color }} />
+                    <span key={i} className="w-2 h-2 rounded" style={{ backgroundColor: e.color }} />
                   ))}
                 </div>
               )}

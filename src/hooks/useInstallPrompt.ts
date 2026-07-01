@@ -5,18 +5,30 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
+let _deferredPrompt: BeforeInstallPromptEvent | null = null;
+
+if (typeof window !== "undefined") {
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    _deferredPrompt = e as BeforeInstallPromptEvent;
+  });
+}
+
 export function useInstallPrompt() {
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(_deferredPrompt);
   const [isInstalled, setIsInstalled] = useState(false);
 
   useEffect(() => {
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+      const ev = e as BeforeInstallPromptEvent;
+      _deferredPrompt = ev;
+      setDeferredPrompt(ev);
     };
 
     const handleInstalled = () => {
       setIsInstalled(true);
+      _deferredPrompt = null;
       setDeferredPrompt(null);
     };
 
@@ -40,6 +52,7 @@ export function useInstallPrompt() {
     if (outcome === "accepted") {
       setIsInstalled(true);
     }
+    _deferredPrompt = null;
     setDeferredPrompt(null);
   }, [deferredPrompt]);
 

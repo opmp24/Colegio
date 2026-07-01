@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useCourses, useCreateCourse, useUpdateCourse, useDeleteCourse } from "@/hooks/useCourses";
+import { useConfirm } from "@/hooks/useConfirm";
 
 export default function CoursesPage() {
   const { data: courses, isLoading } = useCourses();
@@ -9,6 +10,7 @@ export default function CoursesPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", grade: "", section: "", color: "#6366f1" });
+  const { confirm: confirmDelete, dialog: confirmDialog } = useConfirm();
 
   const resetForm = () => {
     setForm({ name: "", grade: "", section: "", color: "#6366f1" });
@@ -91,7 +93,10 @@ export default function CoursesPage() {
                 </svg>
               </button>
               <button
-                onClick={() => { if (confirm("¿Eliminar curso?")) deleteCourse.mutate(c.id); }}
+                onClick={async () => {
+                  const ok = await confirmDelete({ title: "Eliminar curso", message: "¿Estás seguro de eliminar este curso?", variant: "danger" });
+                  if (ok) deleteCourse.mutate(c.id);
+                }}
                 className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -105,6 +110,7 @@ export default function CoursesPage() {
           )}
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }

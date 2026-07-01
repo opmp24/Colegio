@@ -1,9 +1,8 @@
 import { useState } from "react";
 import { useCourses } from "@/hooks/useCourses";
 import { useSubjects, useCreateSubject, useUpdateSubject, useDeleteSubject } from "@/hooks/useSubjects";
+import { useConfirm } from "@/hooks/useConfirm";
 import type { Subject } from "@/types";
-
-const EMOJIS = ["📚", "📐", "🔬", "🌍", "📖", "🎨", "🎵", "⚽", "💻", "🧮", "🔤", "🧪", "📜", "🗣️", "🧠"];
 
 export default function SubjectsPage() {
   const { data: courses } = useCourses();
@@ -14,6 +13,7 @@ export default function SubjectsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState({ course_id: "", name: "", profesor_name: "", color: "#6366f1", icon: "📚" });
+  const { confirm: confirmDelete, dialog: confirmDialog } = useConfirm();
 
   const resetForm = () => {
     setForm({ course_id: "", name: "", profesor_name: "", color: "#6366f1", icon: "📚" });
@@ -129,7 +129,10 @@ export default function SubjectsPage() {
                 </svg>
               </button>
               <button
-                onClick={() => { if (confirm("¿Eliminar asignatura?")) deleteSubject.mutate(s.id); }}
+                onClick={async () => {
+                  const ok = await confirmDelete({ title: "Eliminar asignatura", message: "¿Estás seguro de eliminar esta asignatura?", variant: "danger" });
+                  if (ok) deleteSubject.mutate(s.id);
+                }}
                 className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -144,6 +147,7 @@ export default function SubjectsPage() {
           )}
         </div>
       )}
+      {confirmDialog}
     </div>
   );
 }

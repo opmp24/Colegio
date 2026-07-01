@@ -7,7 +7,8 @@ import { useSubjects } from "@/hooks/useSubjects";
 import { useAuth } from "@/context/AuthContext";
 import CalendarGrid from "@/components/Calendar/CalendarGrid";
 import EventCard from "@/components/EventCard/EventCard";
-import type { Subject } from "@/types";
+import EventDetailModal from "@/components/EventDetailModal/EventDetailModal";
+import type { Subject, Event } from "@/types";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -65,6 +66,8 @@ export default function Dashboard() {
     day: "numeric",
     month: "long",
   });
+
+  const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
 
   const canCreate = profile?.role !== "usuario" || profile?.permissions?.includes("eventos");
 
@@ -211,6 +214,7 @@ export default function Dashboard() {
                     courseName={ev.courses ? `${ev.courses.grade} ${ev.courses.name}` : undefined}
                     subjectName={subj?.name}
                     subjectIcon={subj?.icon}
+                    onClick={() => setSelectedEvent(ev)}
                   />
                 );
               })}
@@ -250,11 +254,23 @@ export default function Dashboard() {
                   courseName={ev.courses ? `${ev.courses.grade} ${ev.courses.name}` : undefined}
                   subjectName={subj?.name}
                   subjectIcon={subj?.icon}
+                  onClick={() => setSelectedEvent(ev)}
                 />
               );
             })}
           </div>
         </section>
+      )}
+
+      {selectedEvent && (
+        <EventDetailModal
+          event={selectedEvent}
+          courseColor={(() => { const subj = selectedEvent.subject_id ? subjectMap.get(selectedEvent.subject_id) : undefined; return subj?.color ?? selectedEvent.courses?.color; })()}
+          courseName={selectedEvent.courses ? `${selectedEvent.courses.grade} ${selectedEvent.courses.name}` : undefined}
+          subjectName={(() => { const subj = selectedEvent.subject_id ? subjectMap.get(selectedEvent.subject_id) : undefined; return subj?.name; })()}
+          subjectIcon={(() => { const subj = selectedEvent.subject_id ? subjectMap.get(selectedEvent.subject_id) : undefined; return subj?.icon; })()}
+          onClose={() => setSelectedEvent(null)}
+        />
       )}
     </div>
   );

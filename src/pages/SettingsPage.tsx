@@ -1,16 +1,43 @@
+import { useState } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useCourses } from "@/hooks/useCourses";
 import { useEvents } from "@/hooks/useEvents";
 import { useProfiles } from "@/hooks/useProfiles";
 import { useTheme } from "@/hooks/useTheme";
+import { useUpdateProfile } from "@/hooks/useProfiles";
+import { useToast } from "@/hooks/useToast";
 import InstallButton from "@/components/InstallButton/InstallButton";
+import Avatar from "@/components/Avatar/Avatar";
+import { AVATAR_ICONS, AVATAR_COLORS } from "@/lib/avatar";
 
 export default function SettingsPage() {
-  const { profile, signOut } = useAuth();
+  const { profile, signOut, refreshProfile } = useAuth();
   const { data: courses } = useCourses();
   const { data: events } = useEvents();
   const { data: users } = useProfiles();
   const { isDark, toggle: toggleDark } = useTheme();
+  const updateProfile = useUpdateProfile();
+  const toast = useToast();
+
+  const [selectedIcon, setSelectedIcon] = useState(profile?.avatar_icon ?? "");
+  const [selectedColor, setSelectedColor] = useState(profile?.avatar_color ?? AVATAR_COLORS[0].value);
+  const [savingAvatar, setSavingAvatar] = useState(false);
+
+  const avatarChanged = selectedIcon !== (profile?.avatar_icon ?? "") || selectedColor !== (profile?.avatar_color ?? AVATAR_COLORS[0].value);
+
+  const handleSaveAvatar = async () => {
+    if (!profile || !avatarChanged) return;
+    setSavingAvatar(true);
+    try {
+      await updateProfile.mutateAsync({ id: profile.id, avatar_icon: selectedIcon, avatar_color: selectedColor });
+      await refreshProfile();
+      toast.success("Avatar actualizado");
+    } catch {
+      toast.error("Error al guardar avatar");
+    } finally {
+      setSavingAvatar(false);
+    }
+  };
 
   return (
     <div className="px-4 py-4 space-y-6">
@@ -19,9 +46,14 @@ export default function SettingsPage() {
       {/* Perfil */}
       <section className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm dark:shadow-slate-900/50">
         <h2 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Perfil</h2>
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-full bg-primary-100 dark:bg-primary-900/50 flex items-center justify-center text-primary-700 dark:text-primary-300 font-bold text-xl">
-            {profile?.full_name?.charAt(0) ?? "U"}
+        <div className="flex items-center gap-4 mb-4">
+          <div className="relative">
+            <Avatar full_name={profile?.full_name ?? ""} icon={selectedIcon} color={selectedColor} size="lg" />
+            <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-white dark:bg-slate-700 rounded-full shadow-sm flex items-center justify-center">
+              <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+              </svg>
+            </div>
           </div>
           <div>
             <p className="font-bold text-slate-800 dark:text-slate-100 text-lg">{profile?.full_name}</p>
@@ -31,10 +63,67 @@ export default function SettingsPage() {
               "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30"
             }`}>
               {profile?.role === "admin" ? "Admin" :
-               profile?.role === "profesor" ? "Profesor" : "Usuario"}
+               profile?.role === "profesor" ? "Profesor" : "Alumno"}
             </span>
           </div>
         </div>
+
+        {/* Color picker */}
+        <div className="mb-3">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">Color</p>
+          <div className="flex flex-wrap gap-2">
+            {AVATAR_COLORS.map((c) => (
+              <button
+                key={c.value}
+                onClick={() => setSelectedColor(c.value)}
+                className={`w-8 h-8 rounded-full transition-all ${selectedColor === c.value ? "ring-2 ring-offset-2 ring-slate-400 dark:ring-offset-slate-800 scale-110" : "hover:scale-110"}`}
+                style={{ backgroundColor: c.value }}
+                aria-label={c.label}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Icon picker */}
+        <div className="mb-3">
+          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">Icono</p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => setSelectedIcon("")}
+              className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-bold transition-all border ${
+                selectedIcon === ""
+                  ? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
+                  : "border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-500"
+              }`}
+            >
+              A
+            </button>
+            {AVATAR_ICONS.map((ico) => (
+              <button
+                key={ico.id}
+                onClick={() => setSelectedIcon(ico.id)}
+                className={`w-10 h-10 rounded-xl flex items-center justify-center text-lg transition-all border ${
+                  selectedIcon === ico.id
+                    ? "border-primary-500 bg-primary-50 dark:bg-primary-900/30"
+                    : "border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 hover:border-slate-300 dark:hover:border-slate-500"
+                }`}
+                title={ico.label}
+              >
+                {ico.emoji}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {avatarChanged && (
+          <button
+            onClick={handleSaveAvatar}
+            disabled={savingAvatar}
+            className="w-full py-2.5 bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-semibold rounded-xl text-sm transition-all"
+          >
+            {savingAvatar ? "Guardando..." : "Guardar avatar"}
+          </button>
+        )}
       </section>
 
       {/* Apariencia */}
@@ -93,12 +182,6 @@ export default function SettingsPage() {
         </div>
       </section>
 
-      {/* Instalar App */}
-      <section className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm dark:shadow-slate-900/50">
-        <h2 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Instalar App</h2>
-        <InstallButton variant="full" />
-      </section>
-
       {/* Cerrar sesión */}
       <button
         onClick={signOut}
@@ -109,6 +192,8 @@ export default function SettingsPage() {
         </svg>
         Cerrar sesión
       </button>
+
+      <InstallButton variant="full" />
     </div>
   );
 }
