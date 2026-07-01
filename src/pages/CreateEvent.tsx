@@ -1,14 +1,16 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useCourses } from "@/hooks/useCourses";
 import { useUserCourses } from "@/hooks/useUserCourses";
 import { useSubjects } from "@/hooks/useSubjects";
-import { useCreateEvent } from "@/hooks/useEvents";
+import { useCreateEvent, useUpdateEvent } from "@/hooks/useEvents";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/useToast";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { eventSchema, type EventFormValues } from "@/lib/eventSchema";
+import { db } from "@/lib/db";
+import type { Event } from "@/types";
 
 const eventTypes = [
   { value: "test", label: "Prueba" },
@@ -26,12 +28,24 @@ export default function CreateEvent() {
   const { data: userCourses } = useUserCourses();
   const { data: subjects } = useSubjects();
   const createEvent = useCreateEvent();
+  const updateEvent = useUpdateEvent();
   const toast = useToast();
+  const editId = searchParams.get("edit");
+  const [editEvent, setEditEvent] = useState<Event | null>(null);
+  const isEditing = !!editId;
+
   const dateParam = useMemo(() => {
     const d = searchParams.get("date");
     if (!d) return "";
     return d.includes("T") ? d : `${d}T00:00`;
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!editId) return;
+    db.from("events").select("*").eq("id", editId).single().then((res: { data: unknown; error: unknown }) => {
+      if (!res.error && res.data) setEditEvent(res.data as Event);
+    });
+  }, [editId]);
 
   const {
     register,
@@ -52,6 +66,19 @@ export default function CreateEvent() {
     },
   });
 
+  // Prefill form when editing
+  useEffect(() => {
+    if (!editEvent) return;
+    reset({
+      title: editEvent.title,
+      course_id: editEvent.course_id,
+      subject_id: editEvent.subject_id ?? "",
+      type: editEvent.type,
+      description: editEvent.description ?? "",
+      due_date: editEvent.due_date.slice(0, 16),
+    });
+  }, [editEvent, reset]);
+
   // Reset subject when course changes
   useEffect(() => {
     setValue("subject_id", "");
@@ -63,20 +90,26 @@ export default function CreateEvent() {
 
   const onSubmit: SubmitHandler<EventFormValues> = async (data) => {
     try {
-      await createEvent.mutateAsync({
+      const payload = {
         course_id: data.course_id,
         subject_id: data.subject_id,
         title: data.title,
         description: data.description,
         type: data.type,
         due_date: new Date(data.due_date).toISOString(),
-        created_by: profile?.id ?? "",
-      });
-      toast.success("Actividad creada correctamente");
+      };
+      if (isEditing && editId) {
+        await updateEvent.mutateAsync({ id: editId, ...payload });
+        toast.success("Actividad actualizada correctamente");
+      } else {
+        await createEvent.mutateAsync({ ...payload, created_by: profile?.id ?? "" });
+        toast.success("Actividad creada correctamente");
+      }
       reset();
       navigate("/");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error al crear actividad");
+      const msg = isEditing ? "Error al actualizar actividad" : "Error al crear actividad";
+      toast.error(err instanceof Error ? err.message : msg);
     }
   };
 
@@ -90,7 +123,7 @@ export default function CreateEvent() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </div>
-            <h1 className="text-xl font-bold text-gray-800 dark:text-slate-100">Nueva Actividad</h1>
+            <h1 className="text-xl font-bold text-gray-800 dark:text-slate-100">{isEditing ? "Editar Actividad" : "Nueva Actividad"}</h1>
           </div>
           <button onClick={() => navigate(-1)} className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 p-1" aria-label="Cerrar">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,7 +260,7 @@ export default function CreateEvent() {
                 isSubmitting ? "opacity-50" : ""
               }`}
             >
-              {isSubmitting ? "Guardando..." : "Guardar Actividad"}
+              {isSubmitting ? "Guardando..." : isEditing ? "Actualizar Actividad" : "Guardar Actividad"}
             </button>
           </div>
         </form>

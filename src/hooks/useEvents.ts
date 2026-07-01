@@ -103,6 +103,30 @@ export function useCreateEvent() {
   });
 }
 
+export function useUpdateEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, ...data }: Partial<Event> & { id: string }) => {
+      const { error } = await db.from("events").update(data).eq("id", id);
+      if (error) throw error;
+    },
+    onMutate: async (updatedEvent) => {
+      await qc.cancelQueries({ queryKey: ["events"] });
+      const previousEvents = qc.getQueryData<Event[]>(["events"]) ?? [];
+      qc.setQueryData<Event[]>(["events"], (old = []) =>
+        old.map((item) => (item.id === updatedEvent.id ? { ...item, ...updatedEvent } : item))
+      );
+      return { previousEvents };
+    },
+    onError: (_err, _variables, context) => {
+      if (context?.previousEvents !== undefined) {
+        qc.setQueryData<Event[]>(["events"], context.previousEvents);
+      }
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: ["events"] }),
+  });
+}
+
 export function useDeleteEvent() {
   const qc = useQueryClient();
   return useMutation({

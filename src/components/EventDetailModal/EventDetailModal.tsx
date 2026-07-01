@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import type { Event } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useDeleteEvent } from "@/hooks/useEvents";
@@ -23,6 +24,7 @@ const typeLabels: Record<string, string> = {
 };
 
 export default function EventDetailModal({ event, courseName, subjectName, subjectIcon, courseColor, onClose }: EventDetailModalProps) {
+  const navigate = useNavigate();
   const { profile } = useAuth();
   const deleteEvent = useDeleteEvent();
   const toast = useToast();
@@ -30,7 +32,7 @@ export default function EventDetailModal({ event, courseName, subjectName, subje
   const date = new Date(event.due_date);
   const color = courseColor ?? "#6366f1";
 
-  const canDelete = profile?.role === "admin" || profile?.role === "profesor" || event.created_by === profile?.id;
+  const canEdit = profile?.role === "admin" || profile?.role === "profesor" || event.created_by === profile?.id;
 
   const handleDelete = async () => {
     try {
@@ -91,8 +93,17 @@ export default function EventDetailModal({ event, courseName, subjectName, subje
             </div>
           )}
 
-          {canDelete && (
-            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700">
+          {canEdit && (
+            <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-700 space-y-3">
+              <button
+                onClick={() => { navigate(`/crear?edit=${event.id}`); onClose(); }}
+                className="w-full px-4 py-2.5 border border-primary-200 dark:border-primary-800/50 text-primary-600 dark:text-primary-400 font-semibold rounded-xl hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                Editar actividad
+              </button>
               <button
                 onClick={() => setShowConfirm(true)}
                 className="w-full px-4 py-2.5 border border-red-200 dark:border-red-800/50 text-red-600 dark:text-red-400 font-semibold rounded-xl hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center justify-center gap-2"

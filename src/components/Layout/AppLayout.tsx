@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import Avatar from "@/components/Avatar/Avatar";
+import PageTransition from "@/components/PageTransition/PageTransition";
 
 const navItems = [
   { path: "/", label: "Inicio", icon: "M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z" },
@@ -128,7 +129,9 @@ export default function AppLayout() {
           </div>
         )}
 
-        <Outlet />
+        <PageTransition key={location.pathname}>
+          <Outlet />
+        </PageTransition>
       </main>
 
       {/* Bottom Tab Navigation (Mobile) */}
