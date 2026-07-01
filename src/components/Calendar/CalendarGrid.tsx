@@ -54,8 +54,9 @@ export default function CalendarGrid({ year, month, view, weekStart, events, sel
               key={dateKey}
               onClick={() => onSelectDate(dateKey)}
               className={`h-10 flex flex-col items-center justify-center rounded-lg text-sm transition-colors relative ${
-                isSelected ? "bg-primary-600 text-white font-bold" : "hover:bg-slate-100 dark:hover:bg-slate-700"
+                isSelected ? "bg-primary-600 text-white font-bold" : dayEvents.length > 0 ? "hover:!bg-slate-100 dark:hover:!bg-slate-700" : "hover:bg-slate-100 dark:hover:bg-slate-700"
               }`}
+              style={!isSelected && dayEvents.length > 0 ? { backgroundColor: dayEvents[0].color + "20" } : undefined}
             >
               <span>{day}</span>
               {dayEvents.length > 0 && (
