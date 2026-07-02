@@ -1,8 +1,11 @@
-import { useState, useRef, type KeyboardEvent, type ClipboardEvent } from "react";
+import { useState, useRef, useEffect, lazy, Suspense, type KeyboardEvent, type ClipboardEvent } from "react";
 import { Navigate } from "react-router-dom";
+import gsap from "gsap";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import InstallButton from "@/components/InstallButton/InstallButton";
+
+const LetterA3d = lazy(() => import("@/components/LetterA3d/LetterA3d"));
 
 export default function LoginPage() {
   const { user, signIn } = useAuth();
@@ -14,7 +17,20 @@ export default function LoginPage() {
   const [recoveryError, setRecoveryError] = useState("");
   const [recoverySuccess, setRecoverySuccess] = useState(false);
   const [recoveryLoading, setRecoveryLoading] = useState(false);
+  const [showPin, setShowPin] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const headerRef = useRef<HTMLElement>(null);
+  const formRef = useRef<HTMLElement>(null);
+  const footerRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const tl = gsap.timeline({ defaults: { duration: 0.5, ease: "power3.out" } });
+    tl.fromTo(headerRef.current, { autoAlpha: 0, y: -20 }, { autoAlpha: 1, y: 0 })
+      .fromTo(formRef.current, { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0 }, "-=0.2")
+      .fromTo("#pin-inputs > input", { autoAlpha: 0, scale: 0.8 }, { autoAlpha: 1, scale: 1, stagger: 0.04 }, "-=0.1")
+      .fromTo(footerRef.current, { autoAlpha: 0 }, { autoAlpha: 1 }, "-=0.2");
+  }, []);
 
   if (user) return <Navigate to="/" replace />;
 
@@ -32,6 +48,7 @@ export default function LoginPage() {
     next[idx] = digit;
     setDigits(next);
     if (digit) focusNext(idx);
+    if (next.every((d) => d)) setTimeout(() => handleSubmit(next.join("")), 120);
   };
 
   const handleKeyDown = (idx: number, e: KeyboardEvent<HTMLInputElement>) => {
@@ -47,10 +64,11 @@ export default function LoginPage() {
     setDigits(next);
     const focusIdx = Math.min(text.length, 7);
     inputRefs.current[focusIdx]?.focus();
+    if (next.every((d) => d)) setTimeout(() => handleSubmit(next.join("")), 120);
   };
 
-  const handleSubmit = async () => {
-    const pin = digits.join("");
+  const handleSubmit = async (customPin?: string) => {
+    const pin = customPin ?? digits.join("");
     if (pin.length !== 8) return;
     setError("");
     setBlocked(false);
@@ -118,20 +136,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-school-bg dark:bg-slate-900 flex flex-col items-center justify-center p-6">
-      <main className="w-full max-w-sm flex flex-col items-center">
-        <header className="mb-10 text-center">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-primary-100 dark:bg-primary-900/50 rounded-2xl mb-4 shadow-sm">
-            <svg className="w-12 h-12 text-primary-600 dark:text-primary-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
-            </svg>
-          </div>
+    <div className="min-h-screen bg-school-bg dark:bg-slate-900 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none">
+        <Suspense fallback={null}>
+          <LetterA3d />
+        </Suspense>
+      </div>
+      <main className="w-full max-w-sm flex flex-col items-center relative z-10">
+        <header ref={headerRef} className="mb-10 text-center">
           <h1 className="text-3xl font-bold text-gray-800 dark:text-slate-100 tracking-tight">Agenda Escolar</h1>
           <p className="text-gray-500 dark:text-slate-400 mt-2">Tu día a día, organizado.</p>
         </header>
 
-        <section className="w-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm p-8 rounded-3xl shadow-xl dark:shadow-slate-900/50 border border-white/40 dark:border-slate-700/40">
+        <section ref={formRef} className="w-full backdrop-blur-sm p-8 rounded-3xl shadow-xl dark:shadow-slate-900/50 border border-white/40 dark:border-slate-700/40">
           <h2 className="text-xl font-semibold text-gray-700 dark:text-slate-200 mb-2 text-center">Ingresa tu código</h2>
           <p className="text-sm text-gray-400 dark:text-slate-500 text-center mb-6">Usa el código de 8 dígitos que te entregó tu establecimiento.</p>
 
@@ -142,27 +159,62 @@ export default function LoginPage() {
             </div>
           )}
 
-          <div className="flex gap-2 justify-center mb-6">
-            {digits.map((d, i) => (
-              <input
-                key={i}
-                ref={(el) => { inputRefs.current[i] = el; }}
-                type="text"
-                inputMode="numeric"
-                maxLength={1}
-                value={d}
-                onChange={(e) => handleChange(i, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(i, e)}
-                onPaste={i === 0 ? handlePaste : undefined}
-                className="w-10 h-12 text-center text-lg font-bold rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-primary-500 focus:ring focus:ring-primary-200 transition-all bg-white dark:bg-slate-700 dark:text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            ))}
+          <div id="pin-inputs" className="flex flex-col items-center gap-2 mb-6">
+            <div className="flex gap-2 justify-center">
+              {digits.slice(0, 4).map((d, i) => (
+                <input
+                  key={i}
+                  ref={(el) => { inputRefs.current[i] = el; }}
+                  type={showPin ? "text" : "password"}
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={d}
+                  onChange={(e) => handleChange(i, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(i, e)}
+                  onPaste={i === 0 ? handlePaste : undefined}
+                  className="w-10 h-12 text-center text-lg font-bold rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-primary-500 focus:ring focus:ring-primary-200 transition-all bg-white dark:bg-slate-700 dark:text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+              ))}
+            </div>
+            <div className="flex gap-2 justify-center">
+              {digits.slice(4, 8).map((d, i) => (
+                <input
+                  key={i + 4}
+                  ref={(el) => { inputRefs.current[i + 4] = el; }}
+                  type={showPin ? "text" : "password"}
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={d}
+                  onChange={(e) => handleChange(i + 4, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(i + 4, e)}
+                  className="w-10 h-12 text-center text-lg font-bold rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-primary-500 focus:ring focus:ring-primary-200 transition-all bg-white dark:bg-slate-700 dark:text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+              ))}
+            </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => setShowPin(!showPin)}
+            className="mx-auto mb-4 flex items-center gap-2 text-xs font-medium text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
+          >
+            {showPin ? (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            )}
+            {showPin ? "Ocultar" : "Mostrar"} código
+          </button>
 
           {error && <p className="text-red-500 dark:text-red-400 text-sm text-center mb-4">{error}</p>}
 
           <button
-            onClick={handleSubmit}
+            onClick={() => handleSubmit()}
             disabled={digits.some((d) => !d)}
             className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-semibold py-4 rounded-xl shadow-lg shadow-primary-100 dark:shadow-primary-900/30 transition-all active:scale-[0.98] disabled:shadow-none"
           >
@@ -237,7 +289,7 @@ export default function LoginPage() {
           </div>
         )}
 
-        <footer className="mt-12 text-center space-y-2">
+        <footer ref={footerRef} className="mt-12 text-center space-y-2">
           <InstallButton variant="compact" />
           <div>
             <span className="text-xs uppercase tracking-widest text-gray-500 dark:text-slate-400 font-bold opacity-40">PWA v1.1</span>
