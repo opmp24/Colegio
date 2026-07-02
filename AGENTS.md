@@ -219,7 +219,8 @@ src/
 14. siempre que solicites crear algo en supabase verifica si tienes permisos para hacerlo
 15. cuando el usuario diga que una versión es estable, crear un tag en git con formato `v<major>.<minor>.<patch>` (ej: v1.0.0, v1.1.0) en la rama `main` y pushearlo
 16. usar prioritariamente `codegraph_explore` como primera herramienta para entender flujos de código (en vez de grep/read múltiples)
-17. todo el flujo pasa por develop: commitear, buildear docs/, commitear docs/, mergear a main, pushear main. Sin commits directos a main.
+17. No hacer commits, merges, ni pushes a `main` a menos que el usuario lo pida explícitamente. El deploy a Netlify se gatilla al pushear `main`, por lo que el usuario retiene el control de cuándo se deploya.
+    - A `develop` sí se puede commitear normal.
 18. antes de editar código, verificar el flujo con codegraph_explore y leer solo el snippet necesario (no archivos completos)
 19. paralelizar tool calls siempre que sea posible (lecturas, búsquedas, comandos independientes)
 20. no leer archivos ya vistos en la misma sesión — codegraph_explore ya los tiene en contexto

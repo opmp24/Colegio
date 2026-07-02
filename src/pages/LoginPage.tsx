@@ -136,19 +136,19 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-school-bg dark:bg-slate-900 flex flex-col items-center justify-center p-6">
-      <main className="w-full max-w-sm flex flex-col items-center">
+    <div className="min-h-screen bg-school-bg dark:bg-slate-900 flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none">
+        <Suspense fallback={null}>
+          <LetterA3d />
+        </Suspense>
+      </div>
+      <main className="w-full max-w-sm flex flex-col items-center relative z-10">
         <header ref={headerRef} className="mb-10 text-center">
-          <Suspense fallback={<div className="w-20 h-20 bg-primary-100 dark:bg-primary-900/50 rounded-2xl mx-auto mb-4 animate-pulse" />}>
-            <div className="w-20 h-20 mx-auto mb-4 [&>canvas]:rounded-2xl">
-              <LetterA3d />
-            </div>
-          </Suspense>
           <h1 className="text-3xl font-bold text-gray-800 dark:text-slate-100 tracking-tight">Agenda Escolar</h1>
           <p className="text-gray-500 dark:text-slate-400 mt-2">Tu día a día, organizado.</p>
         </header>
 
-        <section ref={formRef} className="w-full bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm p-8 rounded-3xl shadow-xl dark:shadow-slate-900/50 border border-white/40 dark:border-slate-700/40">
+        <section ref={formRef} className="w-full backdrop-blur-sm p-8 rounded-3xl shadow-xl dark:shadow-slate-900/50 border border-white/40 dark:border-slate-700/40">
           <h2 className="text-xl font-semibold text-gray-700 dark:text-slate-200 mb-2 text-center">Ingresa tu código</h2>
           <p className="text-sm text-gray-400 dark:text-slate-500 text-center mb-6">Usa el código de 8 dígitos que te entregó tu establecimiento.</p>
 
@@ -159,21 +159,38 @@ export default function LoginPage() {
             </div>
           )}
 
-          <div id="pin-inputs" className="flex gap-2 justify-center mb-6">
-            {digits.map((d, i) => (
-              <input
-                key={i}
-                ref={(el) => { inputRefs.current[i] = el; }}
-                type={showPin ? "text" : "password"}
-                inputMode="numeric"
-                maxLength={1}
-                value={d}
-                onChange={(e) => handleChange(i, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(i, e)}
-                onPaste={i === 0 ? handlePaste : undefined}
-                className="w-10 h-12 text-center text-lg font-bold rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-primary-500 focus:ring focus:ring-primary-200 transition-all bg-white dark:bg-slate-700 dark:text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-              />
-            ))}
+          <div id="pin-inputs" className="flex flex-col items-center gap-2 mb-6">
+            <div className="flex gap-2 justify-center">
+              {digits.slice(0, 4).map((d, i) => (
+                <input
+                  key={i}
+                  ref={(el) => { inputRefs.current[i] = el; }}
+                  type={showPin ? "text" : "password"}
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={d}
+                  onChange={(e) => handleChange(i, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(i, e)}
+                  onPaste={i === 0 ? handlePaste : undefined}
+                  className="w-10 h-12 text-center text-lg font-bold rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-primary-500 focus:ring focus:ring-primary-200 transition-all bg-white dark:bg-slate-700 dark:text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+              ))}
+            </div>
+            <div className="flex gap-2 justify-center">
+              {digits.slice(4, 8).map((d, i) => (
+                <input
+                  key={i + 4}
+                  ref={(el) => { inputRefs.current[i + 4] = el; }}
+                  type={showPin ? "text" : "password"}
+                  inputMode="numeric"
+                  maxLength={1}
+                  value={d}
+                  onChange={(e) => handleChange(i + 4, e.target.value)}
+                  onKeyDown={(e) => handleKeyDown(i + 4, e)}
+                  className="w-10 h-12 text-center text-lg font-bold rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-primary-500 focus:ring focus:ring-primary-200 transition-all bg-white dark:bg-slate-700 dark:text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
+              ))}
+            </div>
           </div>
 
           <button
