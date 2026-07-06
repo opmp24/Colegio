@@ -193,7 +193,7 @@ export default function Dashboard() {
 
       {/* Calendar */}
       <section
-        className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm dark:shadow-slate-900/50 min-h-[40dvh] lg:min-h-0 touch-pan-y"
+        className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm dark:shadow-slate-900/50 touch-pan-y"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -215,12 +215,20 @@ export default function Dashboard() {
               </svg>
             </button>
           </div>
-          <button
-            onClick={() => setViewMode(viewMode === "month" ? "week" : "month")}
-            className="px-3 py-1 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
-          >
-            {viewMode === "month" ? "Semana" : "Mes"}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => { const t = new Date(); setYear(t.getFullYear()); setMonth(t.getMonth()); setSelectedDate(fmtDate(t)); setViewMode("month"); }}
+              className="px-2 py-1 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-600 text-primary-600 dark:text-primary-400 hover:bg-primary-50 dark:hover:bg-primary-900/30 transition-colors"
+            >
+              Hoy
+            </button>
+            <button
+              onClick={() => setViewMode(viewMode === "month" ? "week" : "month")}
+              className="px-3 py-1 text-xs font-semibold rounded-lg border border-slate-200 dark:border-slate-600 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            >
+              {viewMode === "month" ? "Semana" : "Mes"}
+            </button>
+          </div>
         </div>
         <CalendarGrid
           year={year}

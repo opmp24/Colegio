@@ -11,6 +11,7 @@ import type { UserRole } from "@/types";
 import { useToast } from "@/hooks/useToast";
 import { useCreateUser } from "@/hooks/useCreateUser";
 import Avatar from "@/components/Avatar/Avatar";
+import BackToSettings from "@/components/BackToSettings/BackToSettings";
 
 const roleConfig: Record<UserRole, { label: string; color: string }> = {
   admin: { label: "Admin", color: "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30" },
@@ -388,6 +389,7 @@ export default function UsersPage() {
           )}
         </div>
       )}
+      <BackToSettings />
     </div>
   );
 }
