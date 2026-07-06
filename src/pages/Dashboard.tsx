@@ -4,6 +4,7 @@ import { useEvents, useUpcomingEvents } from "@/hooks/useEvents";
 import { useCourses } from "@/hooks/useCourses";
 import { useUserCourses } from "@/hooks/useUserCourses";
 import { useSubjects } from "@/hooks/useSubjects";
+import { useEvaluationTypes } from "@/hooks/useEvaluationTypes";
 import { useAuth } from "@/context/AuthContext";
 import CalendarGrid from "@/components/Calendar/CalendarGrid";
 import EventCard from "@/components/EventCard/EventCard";
@@ -17,6 +18,7 @@ export default function Dashboard() {
   const { data: allCourses, isLoading: allCoursesLoading } = useCourses();
   const { data: userCourses, isLoading: userCoursesLoading } = useUserCourses();
   const { data: subjects } = useSubjects();
+  const { data: evaluationTypes } = useEvaluationTypes();
   const [selectedCourse, setSelectedCourse] = useState<string>("all");
 
   const isTeacher = profile?.role === "admin" || profile?.role === "profesor";
@@ -42,7 +44,7 @@ export default function Dashboard() {
   const weekStart = useMemo(() => {
     if (viewMode !== "week") return today;
     const d = new Date(selectedDate + "T12:00:00");
-    d.setDate(d.getDate() - d.getDay());
+    d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
     return d;
   }, [viewMode, selectedDate]);
 
@@ -266,10 +268,12 @@ export default function Dashboard() {
                   <EventCard
                     key={ev.id}
                     event={ev}
-                    courseColor={subj?.color ?? ev.courses?.color}
+                    courseColor={ev.courses?.color}
                     courseName={ev.courses ? `${ev.courses.grade} ${ev.courses.name}` : undefined}
                     subjectName={subj?.name}
                     subjectIcon={subj?.icon}
+                    subjectColor={subj?.color}
+                    evaluationTypes={evaluationTypes}
                     onClick={() => setSelectedEvent(ev)}
                   />
                 );
@@ -306,10 +310,12 @@ export default function Dashboard() {
                 <EventCard
                   key={ev.id}
                   event={ev}
-                  courseColor={subj?.color ?? ev.courses?.color}
+                  courseColor={ev.courses?.color}
                   courseName={ev.courses ? `${ev.courses.grade} ${ev.courses.name}` : undefined}
                   subjectName={subj?.name}
                   subjectIcon={subj?.icon}
+                  subjectColor={subj?.color}
+                  evaluationTypes={evaluationTypes}
                   onClick={() => setSelectedEvent(ev)}
                 />
               );
@@ -321,10 +327,11 @@ export default function Dashboard() {
       {selectedEvent && (
         <EventDetailModal
           event={selectedEvent}
-          courseColor={(() => { const subj = selectedEvent.subject_id ? subjectMap.get(selectedEvent.subject_id) : undefined; return subj?.color ?? selectedEvent.courses?.color; })()}
+          courseColor={selectedEvent.courses?.color}
           courseName={selectedEvent.courses ? `${selectedEvent.courses.grade} ${selectedEvent.courses.name}` : undefined}
           subjectName={(() => { const subj = selectedEvent.subject_id ? subjectMap.get(selectedEvent.subject_id) : undefined; return subj?.name; })()}
           subjectIcon={(() => { const subj = selectedEvent.subject_id ? subjectMap.get(selectedEvent.subject_id) : undefined; return subj?.icon; })()}
+          subjectColor={(() => { const subj = selectedEvent.subject_id ? subjectMap.get(selectedEvent.subject_id) : undefined; return subj?.color; })()}
           onClose={() => setSelectedEvent(null)}
         />
       )}

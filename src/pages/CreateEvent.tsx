@@ -4,6 +4,7 @@ import { useCourses } from "@/hooks/useCourses";
 import { useUserCourses } from "@/hooks/useUserCourses";
 import { useSubjects } from "@/hooks/useSubjects";
 import { useCreateEvent, useUpdateEvent } from "@/hooks/useEvents";
+import { useEvaluationTypes } from "@/hooks/useEvaluationTypes";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/useToast";
 import { useForm, type SubmitHandler } from "react-hook-form";
@@ -12,14 +13,6 @@ import { eventSchema, type EventFormValues } from "@/lib/eventSchema";
 import { db } from "@/lib/db";
 import type { Event } from "@/types";
 
-const eventTypes = [
-  { value: "test", label: "Prueba" },
-  { value: "exam", label: "Examen" },
-  { value: "homework", label: "Trabajo" },
-  { value: "essay", label: "Ensayo" },
-  { value: "other", label: "Otros" },
-] as const;
-
 export default function CreateEvent() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -27,6 +20,7 @@ export default function CreateEvent() {
   const { data: courses } = useCourses();
   const { data: userCourses } = useUserCourses();
   const { data: subjects } = useSubjects();
+  const { data: evaluationTypes } = useEvaluationTypes();
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent();
   const toast = useToast();
@@ -191,23 +185,24 @@ export default function CreateEvent() {
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-700 dark:text-slate-200 mb-1">Tipo de Evaluación</label>
-            <div className="grid grid-cols-3 gap-2">
-              {eventTypes.map((t) => (
-                <button
-                  key={t.value}
-                  type="button"
-                  onClick={() => setValue("type", t.value)}
-                  className={`px-3 py-2 rounded-xl text-sm font-medium border transition-colors ${
-                    watch("type") === t.value
-                      ? "border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300"
-                      : "border-gray-200 dark:border-gray-600 text-gray-600 dark:text-slate-300 hover:border-gray-300 dark:hover:border-gray-500"
-                  }`}
-                >
+            <label className="block text-sm font-semibold text-gray-700 dark:text-slate-200 mb-1" htmlFor="type">Tipo de Evaluación</label>
+            <select
+              id="type"
+              {...register("type", { required: "Tipo de evaluación es requerido" })}
+              className={`w-full rounded-xl border-gray-200 dark:border-gray-600 dark:bg-slate-700 dark:text-white focus:border-primary-500 focus:ring-primary-500 transition-colors py-3 px-4 appearance-none ${
+                errors.type ? "border-red-500" : ""
+              }`}
+            >
+              <option value="">Selecciona un tipo</option>
+              {(evaluationTypes ?? []).map((t) => (
+                <option key={t.id} value={t.name}>
                   {t.label}
-                </button>
+                </option>
               ))}
-            </div>
+            </select>
+            {errors.type && (
+              <p className="text-xs text-red-500 mt-1">{errors.type.message}</p>
+            )}
           </div>
 
           <div>

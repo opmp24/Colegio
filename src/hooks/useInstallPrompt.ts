@@ -18,6 +18,9 @@ export function useInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(_deferredPrompt);
   const [isInstalled, setIsInstalled] = useState(false);
 
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
   useEffect(() => {
     const handleBeforeInstall = (e: Event) => {
       e.preventDefault();
@@ -35,7 +38,11 @@ export function useInstallPrompt() {
     window.addEventListener("beforeinstallprompt", handleBeforeInstall);
     window.addEventListener("appinstalled", handleInstalled);
 
-    if (window.matchMedia("(display-mode: standalone)").matches) {
+    const isStandalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      (navigator as Navigator & { standalone?: boolean }).standalone === true;
+
+    if (isStandalone) {
       setIsInstalled(true);
     }
 
@@ -59,6 +66,7 @@ export function useInstallPrompt() {
   return {
     isInstallable: !!deferredPrompt,
     isInstalled,
+    isIOS,
     install,
   };
 }

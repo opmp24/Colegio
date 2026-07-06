@@ -6,6 +6,7 @@ import { useProfiles, useUpdateProfile } from "@/hooks/useProfiles";
 import { useAdminAuth } from "@/hooks/useAdminAuth";
 import { useAuth } from "@/context/AuthContext";
 import { useCourses } from "@/hooks/useCourses";
+import { getContrastText, getContrastBorder } from "@/lib/color";
 import type { UserRole } from "@/types";
 import { useToast } from "@/hooks/useToast";
 import { useCreateUser } from "@/hooks/useCreateUser";
@@ -276,8 +277,8 @@ export default function UsersPage() {
                         return c ? (
                           <span
                             key={cid}
-                            className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
-                            style={{ backgroundColor: c.color + "20", color: c.color }}
+                            className={"inline-block px-2 py-0.5 rounded-full text-[11px] font-semibold border " + getContrastText(c.color)}
+                            style={{ backgroundColor: c.color, borderColor: getContrastBorder(c.color) }}
                           >
                             {c.grade} {c.name}
                           </span>

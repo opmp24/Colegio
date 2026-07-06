@@ -4,6 +4,7 @@ import gsap from "gsap";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
 import InstallButton from "@/components/InstallButton/InstallButton";
+import IosInstallGuide from "@/components/IosInstallGuide/IosInstallGuide";
 
 const LetterA3d = lazy(() => import("@/components/LetterA3d/LetterA3d"));
 
@@ -291,8 +292,9 @@ export default function LoginPage() {
 
         <footer ref={footerRef} className="mt-12 text-center space-y-2">
           <InstallButton variant="compact" />
+          <IosInstallGuide variant="compact" />
           <div>
-            <span className="text-xs uppercase tracking-widest text-gray-500 dark:text-slate-400 font-bold opacity-40">PWA v1.1</span>
+            <span className="text-xs uppercase tracking-widest text-gray-500 dark:text-slate-400 font-bold opacity-40">PWA v1.2</span>
           </div>
         </footer>
       </main>

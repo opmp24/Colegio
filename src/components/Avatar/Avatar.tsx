@@ -5,6 +5,7 @@ interface AvatarProps {
   icon?: string;
   color?: string;
   size?: "sm" | "md" | "lg";
+  badge?: number;
   className?: string;
 }
 
@@ -20,29 +21,37 @@ const emojiSizes = {
   lg: "text-2xl leading-none",
 };
 
-export default function Avatar({ full_name, icon, color, size = "sm", className = "" }: AvatarProps) {
+export default function Avatar({ full_name, icon, color, size = "sm", badge, className = "" }: AvatarProps) {
   const iconData = icon ? AVATAR_ICONS.find((i) => i.id === icon) : undefined;
   const bgColor = color ?? "#6366f1";
+
+  const badgeEl = badge !== undefined && badge > 0 ? (
+    <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] flex items-center justify-center rounded-full bg-red-500 text-white text-[10px] font-bold px-1 leading-none ring-2 ring-white dark:ring-slate-800">
+      {badge > 99 ? "99+" : badge}
+    </span>
+  ) : null;
 
   if (iconData) {
     return (
       <div
-        className={`rounded-full flex items-center justify-center shrink-0 ${sizeClasses[size]} ${className}`}
+        className={`relative rounded-full flex items-center justify-center shrink-0 ${sizeClasses[size]} ${className}`}
         style={{ backgroundColor: bgColor }}
       >
         <span className={emojiSizes[size]} style={{ lineHeight: 1 }}>
           {iconData.emoji}
         </span>
+        {badgeEl}
       </div>
     );
   }
 
   return (
     <div
-      className={`rounded-full flex items-center justify-center font-bold shrink-0 text-white ${sizeClasses[size]} ${className}`}
+      className={`relative rounded-full flex items-center justify-center font-bold shrink-0 text-white ${sizeClasses[size]} ${className}`}
       style={{ backgroundColor: bgColor }}
     >
       <span>{full_name?.charAt(0)?.toUpperCase() ?? "U"}</span>
+      {badgeEl}
     </div>
   );
 }

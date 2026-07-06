@@ -11,6 +11,7 @@ import Dashboard from "@/pages/Dashboard";
 import CreateEvent from "@/pages/CreateEvent";
 import CoursesPage from "@/pages/CoursesPage";
 import SubjectsPage from "@/pages/SubjectsPage";
+import EvaluationTypesPage from "@/pages/EvaluationTypesPage";
 import UsersPage from "@/pages/UsersPage";
 import SettingsPage from "@/pages/SettingsPage";
 import NotFoundPage from "@/pages/NotFoundPage";
@@ -70,6 +71,7 @@ function App() {
               <Route path="/crear" element={<CanCreateRoute><CreateEvent /></CanCreateRoute>} />
               <Route path="/cursos" element={<TeacherRoute><CoursesPage /></TeacherRoute>} />
               <Route path="/asignaturas" element={<TeacherRoute><SubjectsPage /></TeacherRoute>} />
+              <Route path="/tipos-evaluacion" element={<TeacherRoute><EvaluationTypesPage /></TeacherRoute>} />
               <Route path="/usuarios" element={<TeacherRoute><UsersPage /></TeacherRoute>} />
               <Route path="/ajustes" element={<SettingsPage />} />
             </Route>
