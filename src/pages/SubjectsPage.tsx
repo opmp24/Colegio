@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useCourses } from "@/hooks/useCourses";
 import { useSubjects, useCreateSubject, useUpdateSubject, useDeleteSubject } from "@/hooks/useSubjects";
 import { useConfirm } from "@/hooks/useConfirm";
+import BackToSettings from "@/components/BackToSettings/BackToSettings";
 import { useToast } from "@/hooks/useToast";
 import { getContrastText, getContrastBorder } from "@/lib/color";
 import type { Subject } from "@/types";
@@ -205,6 +206,7 @@ export default function SubjectsPage() {
           </div>
         )}
         {confirmDialog}
+        <BackToSettings />
       </div>
     );
-}
+  }

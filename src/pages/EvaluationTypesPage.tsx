@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useEvaluationTypes, useCreateEvaluationType, useUpdateEvaluationType, useDeleteEvaluationType } from "@/hooks/useEvaluationTypes";
 import { useConfirm } from "@/hooks/useConfirm";
+import BackToSettings from "@/components/BackToSettings/BackToSettings";
 import { useToast } from "@/hooks/useToast";
 import type { EvaluationType } from "@/types";
 
@@ -134,6 +135,7 @@ const deleteErrMsg = err instanceof Error ? err.message : typeof err === "object
         </div>
       )}
       {confirmDialog}
+      <BackToSettings />
     </div>
   );
 }

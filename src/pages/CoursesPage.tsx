@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useCourses, useCreateCourse, useUpdateCourse, useDeleteCourse } from "@/hooks/useCourses";
 import { useConfirm } from "@/hooks/useConfirm";
+import BackToSettings from "@/components/BackToSettings/BackToSettings";
 import { useToast } from "@/hooks/useToast";
 import { getContrastText, getContrastBorder } from "@/lib/color";
 
@@ -129,6 +130,7 @@ export default function CoursesPage() {
         </div>
       )}
       {confirmDialog}
+      <BackToSettings />
     </div>
   );
 }
