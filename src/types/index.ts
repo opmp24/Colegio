@@ -31,13 +31,20 @@ export interface Subject {
   created_at: string;
 }
 
+export interface EvaluationType {
+  id: string;
+  name: string;
+  label: string;
+  created_at: string;
+}
+
 export interface Event {
   id: string;
   course_id: string;
   subject_id: string | null;
   title: string;
   description: string | null;
-  type: "test" | "exam" | "homework" | "essay" | "other";
+  type: string;
   due_date: string;
   created_by: string;
   created_at: string;

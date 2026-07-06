@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useCourses, useCreateCourse, useUpdateCourse, useDeleteCourse } from "@/hooks/useCourses";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useToast } from "@/hooks/useToast";
+import { getContrastText, getContrastBorder } from "@/lib/color";
 
 export default function CoursesPage() {
   const { data: courses, isLoading } = useCourses();
@@ -86,10 +87,13 @@ export default function CoursesPage() {
       ) : (
         <div className="space-y-2">
           {courses?.map((c) => (
-            <div key={c.id} className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm dark:shadow-slate-900/50 flex items-center gap-3">
-              <div className="w-3 h-10 rounded-full" style={{ backgroundColor: c.color }} />
+            <div key={c.id} className="bg-white dark:bg-slate-800 rounded-none p-4 shadow-sm dark:shadow-slate-900/50 flex items-center gap-3 border border-gray-200 dark:border-slate-700">
               <div className="flex-1">
-                <p className="font-bold text-slate-800 dark:text-slate-100">{c.grade} {c.name} {c.section}</p>
+                <p className="font-bold inline-flex items-center gap-2 flex-wrap">
+                  <span className={"inline-block px-3 py-1 rounded text-sm border " + getContrastText(c.color)} style={{ backgroundColor: c.color, borderColor: getContrastBorder(c.color) }}>
+                    {c.grade} {c.name} {c.section}
+                  </span>
+                </p>
                 <p className="text-xs text-slate-500 dark:text-slate-400">Creado {new Date(c.created_at).toLocaleDateString("es-CL")}</p>
               </div>
               <button

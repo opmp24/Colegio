@@ -4,6 +4,7 @@ import type { Event } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useDeleteEvent } from "@/hooks/useEvents";
 import { useToast } from "@/hooks/useToast";
+import { getContrastText, getContrastBorder } from "@/lib/color";
 import ConfirmDialog from "@/components/ConfirmDialog/ConfirmDialog";
 
 interface EventDetailModalProps {
@@ -11,19 +12,12 @@ interface EventDetailModalProps {
   courseName?: string;
   subjectName?: string;
   subjectIcon?: string;
+  subjectColor?: string;
   courseColor?: string;
   onClose: () => void;
 }
 
-const typeLabels: Record<string, string> = {
-  test: "Prueba",
-  exam: "Examen",
-  homework: "Trabajo",
-  essay: "Ensayos",
-  other: "Otros",
-};
-
-export default function EventDetailModal({ event, courseName, subjectName, subjectIcon, courseColor, onClose }: EventDetailModalProps) {
+export default function EventDetailModal({ event, courseName, subjectName, subjectIcon, subjectColor, courseColor, onClose }: EventDetailModalProps) {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const deleteEvent = useDeleteEvent();
@@ -50,12 +44,22 @@ export default function EventDetailModal({ event, courseName, subjectName, subje
         <div className="absolute inset-0 bg-black/40" onClick={onClose} />
         <div className="relative bg-white dark:bg-slate-800 rounded-t-2xl md:rounded-2xl p-6 max-w-lg w-full shadow-xl max-h-[90dvh] overflow-y-auto">
           <div className="flex items-start justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: color }} />
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                {subjectName ?? typeLabels[event.type] ?? event.type}
-                {courseName && ` · ${courseName}`}
-              </span>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {courseName && (
+                <span className={"inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase border " + getContrastText(courseColor ?? "#6366f1")} style={{ backgroundColor: courseColor ?? "#6366f1", borderColor: getContrastBorder(courseColor ?? "#6366f1") }}>
+                  {courseName}
+                </span>
+              )}
+              {subjectIcon && (
+                <span className="inline-flex items-center justify-center w-5 h-5 rounded text-xs leading-none shrink-0" style={{ backgroundColor: subjectColor ?? "#6366f1" }}>
+                  {subjectIcon}
+                </span>
+              )}
+              {subjectName && (
+                <span className={"inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase border " + getContrastText(subjectColor ?? "#6366f1")} style={{ backgroundColor: subjectColor ?? "#6366f1", borderColor: getContrastBorder(subjectColor ?? "#6366f1") }}>
+                  {subjectName}
+                </span>
+              )}
             </div>
             <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-400 dark:text-slate-500">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -83,7 +87,7 @@ export default function EventDetailModal({ event, courseName, subjectName, subje
 
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold" style={{ color, backgroundColor: `${color}15` }}>
             <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-            {typeLabels[event.type] ?? event.type}
+            {event.type}
           </div>
 
           {event.description && (

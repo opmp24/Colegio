@@ -3,6 +3,7 @@ import { useCourses } from "@/hooks/useCourses";
 import { useSubjects, useCreateSubject, useUpdateSubject, useDeleteSubject } from "@/hooks/useSubjects";
 import { useConfirm } from "@/hooks/useConfirm";
 import { useToast } from "@/hooks/useToast";
+import { getContrastText, getContrastBorder } from "@/lib/color";
 import type { Subject } from "@/types";
 
 const EMOJIS = ["📚", "📐", "🔬", "🌍", "📖", "🎨", "🎵", "⚽", "💻", "🧮", "🔤", "🧪", "📜", "🗣️", "🧠"];
@@ -17,6 +18,7 @@ export default function SubjectsPage() {
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [form, setForm] = useState({ course_id: "", name: "", profesor_name: "", color: "#6366f1", icon: "📚" });
+  const [filterCourseId, setFilterCourseId] = useState<string | null>(null); // null = show all
   const { confirm: confirmDelete, dialog: confirmDialog } = useConfirm();
 
   const resetForm = () => {
@@ -112,58 +114,97 @@ export default function SubjectsPage() {
         </form>
       )}
 
-      {isLoading ? (
+      {/* Course filter for subjects list */}
+      {courses && courses.length > 0 ? (
+        <div className="mb-4">
+          <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">
+            Filtrar por curso
+          </label>
+          <select
+            value={filterCourseId ?? ""}
+            onChange={(e) => setFilterCourseId(e.target.value || null)}
+            className="w-full rounded-lg border-gray-200 dark:border-gray-600 dark:bg-slate-700 dark:text-white px-3 py-2 text-sm focus:border-primary-500 focus:ring-primary-500"
+          >
+            <option value="">Todos los cursos</option>
+            {courses.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.grade} {c.name} {c.section ? `- ${c.section}` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+      ) : (
+        <p className="text-xs text-slate-500 dark:text-slate-400 italic mb-4">
+          No hay cursos disponibles para filtrar
+        </p>
+      )}
+
+{isLoading ? (
         <div className="text-center py-8 text-slate-400 dark:text-slate-500">Cargando asignaturas...</div>
       ) : (
         <div className="space-y-2">
-          {subjects?.map((s) => {
-            const course = courses?.find((c) => c.id === s.course_id);
-            return (
-            <div key={s.id} className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm dark:shadow-slate-900/50 flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl" style={{ backgroundColor: s.color + "20" }}>
-                {s.icon}
-              </div>
-              <div className="flex-1">
-                <p className="font-bold text-slate-800 dark:text-slate-100">{s.name}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">
-                  {s.profesor_name && `${s.profesor_name} · `}
-                  {course && `${course.grade} ${course.name}`}
-                </p>
-              </div>
-              <button
-                onClick={() => handleEdit(s)}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-600 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </button>
-              <button
-                onClick={async () => {
-                  const ok = await confirmDelete({ title: "Eliminar asignatura", message: "¿Estás seguro de eliminar esta asignatura?", variant: "danger" });
-                  if (!ok) return;
-                  try {
-                    await deleteSubject.mutateAsync(s.id);
-                    toast.success("Asignatura eliminada correctamente");
-                  } catch (err) {
-                    toast.error(err instanceof Error ? err.message : "Error al eliminar asignatura");
-                  }
-                }}
-                className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            </div>
-          );
-          })}
-          {subjects?.length === 0 && (
-            <p className="text-center text-slate-400 dark:text-slate-500 py-8 text-sm">No hay asignaturas. Crea la primera.</p>
-          )}
-        </div>
-      )}
-      {confirmDialog}
-    </div>
-  );
+          {(subjects || [])
+            .filter((s) => filterCourseId === null || s.course_id === filterCourseId)
+            .map((s) => {
+              const course = courses?.find((c) => c.id === s.course_id);
+              return (
+                <div key={s.id} className="bg-white dark:bg-slate-800 rounded-none p-4 shadow-sm dark:shadow-slate-900/50 flex items-center gap-3 border border-gray-200 dark:border-slate-700">
+                  <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl border" style={{ backgroundColor: s.color, borderColor: getContrastBorder(s.color) }}>
+                    {s.icon}
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex flex-wrap items-center gap-1.5">
+                      {course && (
+                        <span className={"inline-block px-2 py-1 rounded text-sm font-bold border " + getContrastText(course.color)} style={{ backgroundColor: course.color, borderColor: getContrastBorder(course.color) }}>
+                          {course.grade} {course.name}
+                        </span>
+                      )}
+                      <span className={"inline-block px-2 py-1 rounded text-sm border font-bold " + getContrastText(s.color)} style={{ backgroundColor: s.color, borderColor: getContrastBorder(s.color) }}>
+                        {s.name}
+                      </span>
+                    </div>
+                    {s.profesor_name && (
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">{s.profesor_name}</p>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => handleEdit(s)}
+                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-primary-600 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const ok = await confirmDelete({ title: "Eliminar asignatura", message: "¿Estás seguro de eliminar esta asignatura?", variant: "danger" });
+                      if (!ok) return;
+                      try {
+                        await deleteSubject.mutateAsync(s.id);
+                        toast.success("Asignatura eliminada correctamente");
+                      } catch (err) {
+                        toast.error(err instanceof Error ? err.message : "Error al eliminar asignatura");
+                      }
+                    }}
+                    className="p-2 text-slate-400 dark:text-slate-500 hover:text-red-500 transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              );
+            })}
+{(subjects || [])
+             .filter((s) => filterCourseId === null || s.course_id === filterCourseId)
+             .length === 0 && (
+             <p className="text-center text-slate-400 dark:text-slate-500 py-8 text-sm">
+               {filterCourseId === null ? "No hay asignaturas. Crea la primera." : "No hay asignaturas para este curso"}
+             </p>
+           )}
+          </div>
+        )}
+        {confirmDialog}
+      </div>
+    );
 }

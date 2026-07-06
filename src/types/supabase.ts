@@ -109,6 +109,7 @@ export type Database = {
           description: string | null
           due_date: string
           id: string
+          subject_id: string | null
           title: string
           type: string
         }
@@ -119,6 +120,7 @@ export type Database = {
           description?: string | null
           due_date: string
           id?: string
+          subject_id?: string | null
           title: string
           type: string
         }
@@ -129,6 +131,7 @@ export type Database = {
           description?: string | null
           due_date?: string
           id?: string
+          subject_id?: string | null
           title?: string
           type?: string
         }
@@ -145,6 +148,13 @@ export type Database = {
             columns: null
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: null
+          },
+          {
+            foreignKeyName: "events_subject_id_fkey"
+            columns: null
+            isOneToOne: false
+            referencedRelation: "subjects"
             referencedColumns: null
           },
         ]

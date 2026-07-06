@@ -10,7 +10,7 @@ interface CalendarGridProps {
   onSelectDate: (date: string) => void;
 }
 
-const DAYS = ["DOM", "LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB"];
+const DAYS = ["LUN", "MAR", "MIÉ", "JUE", "VIE", "SÁB", "DOM"];
 
 function fmt(y: number, m: number, d: number) {
   return `${y}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
@@ -34,7 +34,7 @@ export default function CalendarGrid({ year, month, view, weekStart, events, sel
 
   const pad = useMemo(() => {
     if (view === "week") return [];
-    return Array.from({ length: new Date(year, month, 1).getDay() }, () => null);
+    return Array.from({ length: (new Date(year, month, 1).getDay() + 6) % 7 }, () => null);
   }, [view, year, month]);
 
   return (
