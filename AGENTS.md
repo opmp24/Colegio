@@ -7,7 +7,7 @@ PWA informativa para apoderados y alumnos de un colegio, organizada por curso. P
 - **Stack:** React 18+ · TypeScript · Vite · Tailwind CSS v3 · Supabase · GSAP
 - **Idioma:** Español (código, comentarios, UI, commits)
 - **Repo:** `https://github.com/opmp24/Colegio`
-- **Supabase:** Credenciales en `/secrets/keys` (no committear)
+- **Supabase:** Credenciales en `local/secrets/Keys.txt` (no committear)
 - **Deploy:** Automático via Netlify al pushear a `main`. Build command: `npm run build`, publish dir: `docs`. Sin CI local, sin commit de `docs/`.
 - **Dominio:** `https://kurzo.netlify.app`
 
@@ -202,7 +202,7 @@ src/
 - Validar input siempre (Zod schema en server-side)
 
 ## Reglas de operación
-
+0. Leer AGENTS.md completo antes de ejecutar cualquier instrucción — este archivo contiene reglas vinculantes de operación.
 1. No programar sin contexto
 2. Respuestas cortas
 3. No reescribir archivos completos
@@ -225,3 +225,5 @@ src/
 19. paralelizar tool calls siempre que sea posible (lecturas, búsquedas, comandos independientes)
 20. no leer archivos ya vistos en la misma sesión — codegraph_explore ya los tiene en contexto
 21. siempre usar `codegraph_explore` como primera herramienta para entender flujos de código, en lugar de `read`/`grep`/`glob`
+22. Verificación cruzada migración/edge function: Toda nueva tabla creada en migración debe verificar que el schema coincide con el cliente Supabase que la edge function usa. Si la edge function usa supabaseColegio (schema Colegio), la tabla debe ir en schema Colegio. Si va en public, usar supabaseAuth. Documentar esta decisión en el PR.
+23. solo ejecuta instrucciones explicitas
