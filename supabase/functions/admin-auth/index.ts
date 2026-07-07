@@ -463,6 +463,58 @@ Deno.serve(async (req) => {
         );
       }
 
+      case "request-access": {
+        const { full_name, email } = params as { full_name: string; email: string };
+
+        if (!full_name || !email) {
+          return new Response(
+            JSON.stringify({ error: "Nombre y email son requeridos" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(email)) {
+          return new Response(
+            JSON.stringify({ error: "Email inválido" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        const { data: existing } = await supabaseColegio
+          .from("access_requests")
+          .select("id, status")
+          .eq("email", email)
+          .maybeSingle();
+
+        if (existing?.status === "pending") {
+          return new Response(
+            JSON.stringify({ error: "Ya tienes una solicitud pendiente para este correo" }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        if (existing?.status === "approved") {
+          return new Response(
+            JSON.stringify({ error: "Este correo ya tiene acceso. Solicita un nuevo PIN en '¿Olvidó su PIN?'" }),
+            { status: 409, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        const { error: insertError } = await supabaseColegio
+          .from("access_requests")
+          .upsert({ full_name, email, status: "pending" }, { onConflict: "email" });
+
+        if (insertError) {
+          throw new Error(`Error al guardar solicitud: ${JSON.stringify(insertError)}`);
+        }
+
+        return new Response(
+          JSON.stringify({ ok: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
       default:
         return new Response(
           JSON.stringify({ error: `Acción desconocida: ${action}` }),

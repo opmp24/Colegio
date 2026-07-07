@@ -36,6 +36,8 @@ export default function UsersPage() {
   const [courseIds, setCourseIds] = useState<string[]>([]);
   const [newPin, setNewPin] = useState<string | null>(null);
   const [expandedCourses, setExpandedCourses] = useState<string | null>(null);
+  const [approvingRequest, setApprovingRequest] = useState<string | null>(null);
+  const [approveCourseIds, setApproveCourseIds] = useState<string[]>([]);
 
   const { data: courseMembers, refetch: refetchCourseMembers } = useQuery({
     queryKey: ["course-members"],
@@ -43,6 +45,19 @@ export default function UsersPage() {
       const { data, error } = await db.from("course_members").select("user_id, course_id");
       if (error) throw error;
       return (data ?? []) as { user_id: string; course_id: string }[];
+    },
+  });
+
+  const { data: accessRequests, refetch: refetchRequests } = useQuery({
+    queryKey: ["access-requests"],
+    queryFn: async () => {
+      const { data, error } = await db
+        .from("access_requests")
+        .select("*")
+        .eq("status", "pending")
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as AccessRequest[];
     },
   });
 
@@ -70,6 +85,7 @@ export default function UsersPage() {
   };
 
   const isAdmin = currentUser?.role === "admin";
+  const isTeacher = isAdmin || currentUser?.role === "profesor";
 
   const handleCreate = async () => {
     if (!name || !email) return;
@@ -93,6 +109,42 @@ export default function UsersPage() {
 
   const toggleCourse = (id: string) => {
     setCourseIds((prev) => prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]);
+  };
+
+  interface AccessRequest {
+    id: string;
+    full_name: string;
+    email: string;
+    created_at: string;
+    status: string;
+  }
+
+  const handleApprove = async (req: AccessRequest) => {
+    if (approveCourseIds.length === 0) {
+      toast.error("Selecciona al menos un curso");
+      return;
+    }
+    try {
+      const result = await createUserMutation.mutateAsync({
+        full_name: req.full_name,
+        email: req.email,
+        role: "usuario",
+        course_ids: approveCourseIds,
+      });
+      setNewPin(result.pin);
+      const { error: updateError } = await db
+        .from("access_requests")
+        .update({ status: "approved", approved_at: new Date().toISOString(), approved_by: currentUser?.id })
+        .eq("id", req.id);
+      if (updateError) throw updateError;
+      setApprovingRequest(null);
+      setApproveCourseIds([]);
+      refetchRequests();
+      refetch();
+      toast.success(`Acceso aprobado para ${req.full_name}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al aprobar solicitud");
+    }
   };
 
   const handleResetPin = async (userId: string) => {
@@ -159,7 +211,7 @@ export default function UsersPage() {
     <div className="px-4 py-4 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Gestión de Usuarios</h1>
-{isAdmin && (
+{isTeacher && (
             <button
               onClick={() => setShowForm(!showForm)}
               className="px-4 py-2 bg-primary-600 text-white font-medium rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300 dark:bg-primary-500 dark:hover:bg-primary-600 dark:focus:ring-primary-800"
@@ -168,6 +220,83 @@ export default function UsersPage() {
             </button>
           )}
       </div>
+
+      {isTeacher && accessRequests && accessRequests.length > 0 && (
+        <section className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-sm dark:shadow-slate-900/50 space-y-3">
+          <div className="flex items-center gap-2">
+            <h2 className="font-bold text-slate-800 dark:text-slate-100">Solicitudes pendientes</h2>
+            <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+              {accessRequests.length}
+            </span>
+          </div>
+          {accessRequests.map((req) => (
+            <div key={req.id} className="border border-slate-200 dark:border-slate-700 rounded-xl p-3 space-y-2">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-800 dark:text-slate-100 truncate">{req.full_name}</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{req.email}</p>
+                  <p className="text-[11px] text-slate-400 dark:text-slate-500 mt-0.5">
+                    {new Date(req.created_at).toLocaleDateString("es-CL", { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                </div>
+                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 shrink-0">
+                  Pendiente
+                </span>
+              </div>
+              {approvingRequest === req.id ? (
+                <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-700">
+                  <p className="text-xs font-semibold text-gray-600 dark:text-slate-400">Seleccionar curso(s) para asignar</p>
+                  <div className="flex flex-wrap gap-2">
+                    {courses?.map((c) => {
+                      const selected = approveCourseIds.includes(c.id);
+                      return (
+                        <button
+                          key={c.id}
+                          type="button"
+                          onClick={() =>
+                            setApproveCourseIds((prev) =>
+                              prev.includes(c.id) ? prev.filter((id) => id !== c.id) : [...prev, c.id]
+                            )
+                          }
+                          className={`text-xs font-semibold px-3 py-1.5 rounded-full border transition-colors ${
+                            selected
+                              ? "bg-primary-600 text-white border-primary-600"
+                              : "bg-white dark:bg-slate-700 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-600 hover:border-primary-300"
+                          }`}
+                        >
+                          {c.grade} {c.name} {c.section}
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <div className="flex gap-2 pt-1">
+                    <button
+                      onClick={() => handleApprove(req)}
+                      disabled={createUserMutation.isPending || approveCourseIds.length === 0}
+                      className="flex-1 text-xs font-semibold px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white transition-colors"
+                    >
+                      {createUserMutation.isPending ? "Aprobando..." : "Confirmar y enviar código"}
+                    </button>
+                    <button
+                      onClick={() => { setApprovingRequest(null); setApproveCourseIds([]); }}
+                      className="text-xs font-semibold px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+                    >
+                      Cancelar
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button
+                  onClick={() => { setApprovingRequest(req.id); setApproveCourseIds([]); }}
+                  className="w-full text-xs font-semibold px-3 py-2 rounded-lg bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800 transition-colors"
+                >
+                  Aprobar
+                </button>
+              )}
+            </div>
+          ))}
+        </section>
+      )}
 
       {newPin && (
         <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl p-4">

@@ -1,0 +1,2 @@
+-- Replaced by 20260707014920_create_access_requests_schema.sql
+-- Table moved to "Colegio" schema for consistency with app client

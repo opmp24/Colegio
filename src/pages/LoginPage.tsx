@@ -19,6 +19,13 @@ export default function LoginPage() {
   const [recoverySuccess, setRecoverySuccess] = useState(false);
   const [recoveryLoading, setRecoveryLoading] = useState(false);
   const [showPin, setShowPin] = useState(false);
+  const [showRequestAccess, setShowRequestAccess] = useState(false);
+  const [requestName, setRequestName] = useState("");
+  const [requestLastName, setRequestLastName] = useState("");
+  const [requestEmail, setRequestEmail] = useState("");
+  const [requestError, setRequestError] = useState("");
+  const [requestSuccess, setRequestSuccess] = useState(false);
+  const [requestLoading, setRequestLoading] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const headerRef = useRef<HTMLElement>(null);
   const formRef = useRef<HTMLElement>(null);
@@ -107,7 +114,14 @@ export default function LoginPage() {
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        let msg = "Error desconocido";
+        try {
+          const body = await error.context.json();
+          if (body?.error) msg = body.error;
+        } catch {}
+        throw new Error(msg);
+      }
 
       if (!data.ok) {
         throw new Error(data.error || "Error desconocido");
@@ -115,7 +129,6 @@ export default function LoginPage() {
 
       setRecoverySuccess(true);
       setRecoveryLoading(false);
-      // El email se envía en segundo plano, solo mostramos éxito
     } catch (err) {
       setRecoveryLoading(false);
       // No revelamos si el email existe o no por seguridad
@@ -134,6 +147,58 @@ export default function LoginPage() {
     setRecoveryError("");
     setRecoverySuccess(false);
     setRecoveryLoading(false);
+  };
+
+  const handleRequestSubmit = async () => {
+    if (!requestName || !requestLastName || !requestEmail) {
+      setRequestError("Todos los campos son obligatorios");
+      return;
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(requestEmail)) {
+      setRequestError("Por favor ingresa un correo electrónico válido");
+      return;
+    }
+    setRequestLoading(true);
+    setRequestError("");
+    setRequestSuccess(false);
+    try {
+      const { data, error } = await supabase.functions.invoke("admin-auth", {
+        body: {
+          action: "request-access",
+          full_name: `${requestName} ${requestLastName}`,
+          email: requestEmail,
+        },
+      });
+      if (error) {
+        let msg = "Error desconocido";
+        try {
+          const body = await error.context.json();
+          if (body?.error) msg = body.error;
+        } catch {}
+        throw new Error(msg);
+      }
+      if (!data.ok) throw new Error(data.error || "Error desconocido");
+      setRequestSuccess(true);
+      setRequestLoading(false);
+    } catch (err) {
+      setRequestLoading(false);
+      setRequestError(
+        err instanceof Error
+          ? err.message
+          : "Error al enviar la solicitud. Inténtalo nuevamente."
+      );
+    }
+  };
+
+  const handleRequestClose = () => {
+    setShowRequestAccess(false);
+    setRequestName("");
+    setRequestLastName("");
+    setRequestEmail("");
+    setRequestError("");
+    setRequestSuccess(false);
+    setRequestLoading(false);
   };
 
   return (
@@ -222,13 +287,19 @@ export default function LoginPage() {
             Ingresar
           </button>
 
-          {/* Link para recuperar PIN */}
-          <div className="mt-4 text-center">
+          {/* Links */}
+          <div className="mt-4 flex flex-col items-center gap-2">
             <button
               onClick={() => setShowRecovery(true)}
               className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 underline"
             >
               ¿Olvidó su PIN?
+            </button>
+            <button
+              onClick={() => setShowRequestAccess(true)}
+              className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 underline"
+            >
+              Solicitar acceso
             </button>
           </div>
         </section>
@@ -283,6 +354,80 @@ export default function LoginPage() {
                     className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-semibold py-3 rounded-xl transition-all"
                   >
                     {recoveryLoading ? "Enviando..." : "Enviar recuperación"}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {showRequestAccess && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+            <div className="bg-white dark:bg-slate-800 rounded-3xl p-8 max-w-md w-full mx-4 shadow-xl">
+              <div className="flex justify-between items-start mb-4">
+                <h2 className="text-xl font-semibold text-gray-700 dark:text-slate-200">Solicitar acceso</h2>
+                <button
+                  onClick={handleRequestClose}
+                  className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300"
+                >
+                  ×
+                </button>
+              </div>
+              <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
+                Ingresa tus datos para solicitar un código de acceso al establecimiento.
+              </p>
+
+              {requestSuccess && (
+                <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
+                  <p className="text-sm font-medium text-green-600 dark:text-green-400">
+                    Solicitud enviada correctamente.
+                  </p>
+                  <p className="text-xs text-green-500 dark:text-green-400 mt-1">
+                    Recibirás un código de acceso cuando el establecimiento la apruebe.
+                  </p>
+                </div>
+              )}
+
+              {!requestSuccess && (
+                <>
+                  {requestError && (
+                    <p className="text-red-500 dark:text-red-400 text-sm mb-4">{requestError}</p>
+                  )}
+                  <div className="space-y-3 mb-4">
+                    <div className="grid grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        placeholder="Nombre"
+                        value={requestName}
+                        onChange={(e) => setRequestName(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:border-primary-500 focus:ring focus:ring-primary-200 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400"
+                        disabled={requestLoading}
+                      />
+                      <input
+                        type="text"
+                        placeholder="Apellido"
+                        value={requestLastName}
+                        onChange={(e) => setRequestLastName(e.target.value)}
+                        className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:border-primary-500 focus:ring focus:ring-primary-200 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400"
+                        disabled={requestLoading}
+                      />
+                    </div>
+                    <input
+                      type="email"
+                      placeholder="Correo electrónico"
+                      value={requestEmail}
+                      onChange={(e) => setRequestEmail(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-gray-200 dark:border-gray-600 focus:border-primary-500 focus:ring focus:ring-primary-200 dark:bg-slate-700 dark:text-white dark:placeholder-slate-400"
+                      disabled={requestLoading}
+                    />
+                  </div>
+
+                  <button
+                    onClick={handleRequestSubmit}
+                    disabled={requestLoading || !requestName || !requestLastName || !requestEmail}
+                    className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-semibold py-3 rounded-xl transition-all"
+                  >
+                    {requestLoading ? "Enviando..." : "Solicitar acceso"}
                   </button>
                 </>
               )}
