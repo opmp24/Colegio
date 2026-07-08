@@ -3,6 +3,7 @@ import { Navigate } from "react-router-dom";
 import gsap from "gsap";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
+import { APP_VERSION } from "@/lib/config";
 import InstallButton from "@/components/InstallButton/InstallButton";
 import IosInstallGuide from "@/components/IosInstallGuide/IosInstallGuide";
 
@@ -439,7 +440,7 @@ export default function LoginPage() {
           <InstallButton variant="compact" />
           <IosInstallGuide variant="compact" />
           <div>
-            <span className="text-xs uppercase tracking-widest text-gray-500 dark:text-slate-400 font-bold opacity-40">PWA v1.2</span>
+            <span className="text-xs uppercase tracking-widest text-gray-500 dark:text-slate-400 font-bold opacity-40">PWA v{APP_VERSION}</span>
           </div>
         </footer>
       </main>
