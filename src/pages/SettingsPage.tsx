@@ -10,6 +10,7 @@ import { useToast } from "@/hooks/useToast";
 import InstallButton from "@/components/InstallButton/InstallButton";
 import IosInstallGuide from "@/components/IosInstallGuide/IosInstallGuide";
 import Avatar from "@/components/Avatar/Avatar";
+import { APP_VERSION } from "@/lib/config";
 import { AVATAR_ICONS, AVATAR_COLORS } from "@/lib/avatar";
 
 export default function SettingsPage() {
@@ -245,8 +246,9 @@ export default function SettingsPage() {
       <section className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm dark:shadow-slate-900/50">
         <h2 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Información</h2>
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">Versión</span><span className="font-semibold dark:text-slate-200">1.3.0</span></div>
+          <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">Versión</span><span className="font-semibold dark:text-slate-200">{APP_VERSION}</span></div>
           <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">Entorno</span><span className="font-semibold dark:text-slate-200">Producción</span></div>
+          <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">© 2026 Colegio</span><span className="font-semibold text-[11px] dark:text-slate-200">Todos los derechos reservados</span></div>
           <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">Schema</span><span className="font-semibold font-mono text-xs dark:text-slate-200">Colegio</span></div>
         </div>
       </section>
