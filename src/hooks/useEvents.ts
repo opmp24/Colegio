@@ -10,7 +10,7 @@ export function useEvents(courseIds?: string[]) {
 
       let query = db
         .from("events")
-        .select("*, courses:course_id(*)")
+        .select("*, courses:course_id(*), creator:created_by(full_name, avatar_icon, avatar_color)")
         .order("due_date", { ascending: true });
 
       if (courseIds?.length) query = query.in("course_id", courseIds);
@@ -30,7 +30,7 @@ export function useUpcomingEvents(limit = 5, courseIds?: string[]) {
 
       let query = db
         .from("events")
-        .select("*, courses:course_id(*)")
+        .select("*, courses:course_id(*), creator:created_by(full_name, avatar_icon, avatar_color)")
         .gte("due_date", new Date().toISOString())
         .order("due_date", { ascending: true })
         .limit(limit);
@@ -39,7 +39,7 @@ export function useUpcomingEvents(limit = 5, courseIds?: string[]) {
 
       const { data, error } = await query;
       if (error) throw error;
-      return (data ?? []) as any[];
+      return (data ?? []) as Event[];
     },
   });
 }

@@ -12,18 +12,32 @@ interface CreateUserParams {
 
 interface CreateUserResult {
   ok: boolean;
-  pin: string;
   user_id: string;
 }
 
 interface ResetPinResult {
   ok: boolean;
-  pin: string;
 }
 
 interface ToggleBlockResult {
   ok: boolean;
   is_blocked: boolean;
+}
+
+interface VerifyTokenResult {
+  ok: boolean;
+  user_id: string;
+  email: string;
+  full_name: string;
+}
+
+interface CompleteSetupResult {
+  ok: boolean;
+}
+
+interface MigrateAllResult {
+  ok: boolean;
+  count: number;
 }
 
 export function useAdminAuth() {
@@ -66,5 +80,33 @@ export function useAdminAuth() {
   const updateCourses = (userId: string, courseIds: string[]) =>
     callFunction<{ ok: boolean }>({ action: "update-courses", user_id: userId, course_ids: courseIds });
 
-  return { createUser, resetPin, toggleBlock, sendInfo, deleteUser, updatePermissions, updateCourses };
+  const sendSetupLink = (userId: string) =>
+    callFunction<{ ok: boolean }>({ action: "send-setup-link", user_id: userId });
+
+  const verifySetupToken = (token: string) =>
+    callFunction<VerifyTokenResult>({ action: "verify-setup-token", token });
+
+  const completeSetup = (token: string, pin: string) =>
+    callFunction<CompleteSetupResult>({ action: "complete-setup", token, pin });
+
+  const changePin = (currentPin: string, newPin: string) =>
+    callFunction<{ ok: boolean }>({ action: "change-pin", current_pin: currentPin, new_pin: newPin });
+
+  const migrateAll = () =>
+    callFunction<MigrateAllResult>({ action: "migrate-all" });
+
+  return {
+    createUser,
+    resetPin,
+    toggleBlock,
+    sendInfo,
+    deleteUser,
+    updatePermissions,
+    updateCourses,
+    sendSetupLink,
+    verifySetupToken,
+    completeSetup,
+    changePin,
+    migrateAll,
+  };
 }

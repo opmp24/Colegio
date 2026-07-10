@@ -7,6 +7,7 @@ import { TeacherRoute } from "@/components/Guards/TeacherRoute";
 import { CanCreateRoute } from "@/components/Guards/CanCreateRoute";
 import AppLayout from "@/components/Layout/AppLayout";
 import LoginPage from "@/pages/LoginPage";
+import SetupPinPage from "@/pages/SetupPinPage";
 import Dashboard from "@/pages/Dashboard";
 import CreateEvent from "@/pages/CreateEvent";
 import CoursesPage from "@/pages/CoursesPage";
@@ -60,6 +61,7 @@ function App() {
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<LoginPage />} />
+            <Route path="/setup" element={<SetupPinPage />} />
             <Route
               element={
                 <ProtectedRoute>

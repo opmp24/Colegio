@@ -2,6 +2,7 @@ import { useRef, useEffect, useMemo } from "react";
 import gsap from "gsap";
 import type { Event, EvaluationType } from "@/types";
 import { getContrastText, getContrastBorder } from "@/lib/color";
+import { AVATAR_ICONS } from "@/lib/avatar";
 
 interface EventCardProps {
   event: Event;
@@ -11,6 +12,9 @@ interface EventCardProps {
   subjectIcon?: string;
   subjectColor?: string;
   evaluationTypes?: EvaluationType[];
+  creatorName?: string;
+  creatorIcon?: string;
+  creatorColor?: string;
   onClick?: () => void;
 }
 
@@ -20,12 +24,17 @@ const typeLabelsRecord = (types?: EvaluationType[]): Record<string, string> => {
   return map;
 };
 
-export default function EventCard({ event, courseColor, courseName, subjectName, subjectIcon, subjectColor, evaluationTypes, onClick }: EventCardProps) {
+export default function EventCard({ event, courseColor, courseName, subjectName, subjectIcon, subjectColor, evaluationTypes, creatorName, creatorIcon, creatorColor, onClick }: EventCardProps) {
   const ref = useRef<HTMLElement>(null);
   const date = new Date(event.due_date);
   const timeStr = date.toLocaleTimeString("es-CL", { hour: "2-digit", minute: "2-digit" });
   const color = courseColor ?? "#6366f1";
   const typeLabels = useMemo(() => typeLabelsRecord(evaluationTypes), [evaluationTypes]);
+  const creatorIconEmoji = useMemo(() => {
+    if (!creatorIcon) return undefined;
+    const found = AVATAR_ICONS.find((i) => i.id === creatorIcon);
+    return found?.emoji;
+  }, [creatorIcon]);
 
   useEffect(() => {
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
@@ -74,6 +83,22 @@ export default function EventCard({ event, courseColor, courseName, subjectName,
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             {date.toLocaleDateString("es-CL", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
           </p>
+          {creatorName && (
+            <div className="flex items-center gap-1.5 mt-1">
+              <span
+                className="inline-flex items-center gap-1 text-[11px] text-slate-400 dark:text-slate-500"
+                title={`Creado por: ${creatorName}`}
+              >
+                <span
+                  className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white shrink-0"
+                  style={{ backgroundColor: creatorColor ?? "#6366f1" }}
+                >
+                  {creatorIconEmoji ?? creatorName.charAt(0).toUpperCase()}
+                </span>
+                {creatorName}
+              </span>
+            </div>
+          )}
           {event.description && (
             <p className="text-sm text-slate-600 dark:text-slate-300 mt-1 line-clamp-2">{event.description}</p>
           )}

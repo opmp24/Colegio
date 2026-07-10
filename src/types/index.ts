@@ -13,6 +13,8 @@ export interface Profile {
   role: "admin" | "profesor" | "usuario";
   email: string | null;
   pin: string | null;
+  pin_hash: string | null;
+  setup_complete: boolean;
   is_blocked: boolean | null;
   avatar_url: string | null;
   avatar_icon: string;
@@ -49,6 +51,7 @@ export interface Event {
   created_by: string;
   created_at: string;
   courses?: Pick<Course, "grade" | "name" | "color"> | null;
+  creator?: Pick<Profile, "full_name" | "avatar_icon" | "avatar_color"> | null;
 }
 
 export interface CourseMember {

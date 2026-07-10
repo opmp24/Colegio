@@ -1,10 +1,11 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Event } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useDeleteEvent } from "@/hooks/useEvents";
 import { useToast } from "@/hooks/useToast";
 import { getContrastText, getContrastBorder } from "@/lib/color";
+import { AVATAR_ICONS } from "@/lib/avatar";
 import ConfirmDialog from "@/components/ConfirmDialog/ConfirmDialog";
 
 interface EventDetailModalProps {
@@ -14,10 +15,13 @@ interface EventDetailModalProps {
   subjectIcon?: string;
   subjectColor?: string;
   courseColor?: string;
+  creatorName?: string;
+  creatorIcon?: string;
+  creatorColor?: string;
   onClose: () => void;
 }
 
-export default function EventDetailModal({ event, courseName, subjectName, subjectIcon, subjectColor, courseColor, onClose }: EventDetailModalProps) {
+export default function EventDetailModal({ event, courseName, subjectName, subjectIcon, subjectColor, courseColor, creatorName, creatorIcon, creatorColor, onClose }: EventDetailModalProps) {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const deleteEvent = useDeleteEvent();
@@ -25,6 +29,12 @@ export default function EventDetailModal({ event, courseName, subjectName, subje
   const [showConfirm, setShowConfirm] = useState(false);
   const date = new Date(event.due_date);
   const color = courseColor ?? "#6366f1";
+
+  const creatorIconEmoji = useMemo(() => {
+    if (!creatorIcon) return undefined;
+    const found = AVATAR_ICONS.find((i) => i.id === creatorIcon);
+    return found?.emoji;
+  }, [creatorIcon]);
 
   const canEdit = profile?.role === "admin" || profile?.role === "profesor" || event.created_by === profile?.id;
 
@@ -82,6 +92,19 @@ export default function EventDetailModal({ event, courseName, subjectName, subje
             <div className="flex items-center gap-2 mb-4">
               <span className="text-lg">{subjectIcon}</span>
               {subjectName && <span className="text-sm text-slate-600 dark:text-slate-300">{subjectName}</span>}
+            </div>
+          )}
+
+          {creatorName && (
+            <div className="flex items-center gap-2 mb-4 text-sm text-slate-500 dark:text-slate-400">
+              <span className="text-xs font-medium">Creado por</span>
+              <span
+                className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
+                style={{ backgroundColor: creatorColor ?? "#6366f1" }}
+              >
+                {creatorIconEmoji ?? creatorName.charAt(0).toUpperCase()}
+              </span>
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">{creatorName}</span>
             </div>
           )}
 
