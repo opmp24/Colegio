@@ -118,6 +118,7 @@ export default function LoginPage() {
         body: {
           action: "recover-pin",
           email: recoveryEmail,
+          site_url: window.location.origin,
         },
       });
 
@@ -276,7 +277,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => setShowPin(!showPin)}
-            className="mx-auto mb-4 flex items-center gap-2 text-xs font-medium text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
+            className="mx-auto mb-4 flex items-center gap-2 text-xs font-medium text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors border-0"
           >
             {showPin ? (
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -305,13 +306,13 @@ export default function LoginPage() {
           <div className="mt-4 flex flex-col items-center gap-2">
             <button
               onClick={() => setShowRecovery(true)}
-              className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 underline"
+              className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 underline border-0"
             >
               ¿Olvidó su PIN?
             </button>
             <button
               onClick={() => setShowRequestAccess(true)}
-              className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 underline"
+              className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 underline border-0"
             >
               Solicitar acceso
             </button>

@@ -43,7 +43,7 @@ interface MigrateAllResult {
 export function useAdminAuth() {
   const callFunction = async <T>(body: Record<string, unknown>): Promise<T> => {
     const { data, error } = await supabase.functions.invoke(ADMIN_FUNCTION, {
-      body,
+      body: { site_url: window.location.origin, ...body },
     });
     if (error) {
       let msg = error.message ?? "Error desconocido";

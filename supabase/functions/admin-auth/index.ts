@@ -61,12 +61,13 @@ async function verifyPin(pin: string, hash: string): Promise<boolean> {
 const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
 const SITE_URL = Deno.env.get("SITE_URL") || "http://localhost:5173";
 
-async function sendSetupLinkEmail(email: string, fullName: string, token: string) {
+async function sendSetupLinkEmail(email: string, fullName: string, token: string, siteUrl?: string) {
   if (!SENDGRID_API_KEY) {
     console.warn("SENDGRID_API_KEY no configurada, email no enviado");
     return;
   }
-  const setupUrl = `${SITE_URL}/setup?token=${token}`;
+  const baseUrl = siteUrl || SITE_URL;
+  const setupUrl = `${baseUrl}/setup?token=${token}`;
   const html = `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
       <h2 style="color:#6366f1">Agenda Escolar — Configura tu código</h2>
@@ -129,11 +130,12 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "create-user": {
-        const { full_name, email, role, course_ids } = params as {
+        const { full_name, email, role, course_ids, site_url } = params as {
           full_name: string;
           email: string;
           role: "admin" | "profesor" | "usuario";
           course_ids?: string[];
+          site_url?: string;
         };
 
         const tempPassword = generateSecurePassword();
@@ -181,7 +183,7 @@ Deno.serve(async (req) => {
           await saveCourses(existing.id);
 
           const token = await generateSetupToken(existing.id);
-          await sendSetupLinkEmail(email, full_name, token);
+          await sendSetupLinkEmail(email, full_name, token, site_url);
 
           return new Response(
             JSON.stringify({ ok: true, user_id: existing.id }),
@@ -216,7 +218,7 @@ Deno.serve(async (req) => {
         await saveCourses(authUser.user.id);
 
         const token = await generateSetupToken(authUser.user.id);
-        await sendSetupLinkEmail(email, full_name, token);
+        await sendSetupLinkEmail(email, full_name, token, site_url);
 
         return new Response(
           JSON.stringify({ ok: true, user_id: authUser.user.id }),
@@ -225,7 +227,7 @@ Deno.serve(async (req) => {
       }
 
       case "reset-pin": {
-        const { user_id } = params as { user_id: string };
+        const { user_id, site_url } = params as { user_id: string; site_url?: string };
 
         const { data: profile, error: profileError } = await supabaseColegio
           .from("profiles")
@@ -246,7 +248,7 @@ Deno.serve(async (req) => {
         });
 
         const token = await generateSetupToken(user_id);
-        await sendSetupLinkEmail(profile.email!, profile.full_name, token);
+        await sendSetupLinkEmail(profile.email!, profile.full_name, token, site_url);
 
         return new Response(
           JSON.stringify({ ok: true }),
@@ -255,7 +257,7 @@ Deno.serve(async (req) => {
       }
 
       case "recover-pin": {
-        const { email } = params as { email: string };
+        const { email, site_url } = params as { email: string; site_url?: string };
 
         if (!email) {
           return new Response(
@@ -290,7 +292,7 @@ Deno.serve(async (req) => {
         });
 
         const token = await generateSetupToken(profile.id);
-        await sendSetupLinkEmail(profile.email, profile.full_name, token);
+        await sendSetupLinkEmail(profile.email, profile.full_name, token, site_url);
 
         return new Response(
           JSON.stringify({ ok: true }),
@@ -518,7 +520,7 @@ Deno.serve(async (req) => {
       // === NEW ACTIONS ===
 
       case "send-setup-link": {
-        const { user_id } = params as { user_id: string };
+        const { user_id, site_url } = params as { user_id: string; site_url?: string };
 
         const { data: profile, error: profileError } = await supabaseColegio
           .from("profiles")
@@ -529,7 +531,7 @@ Deno.serve(async (req) => {
         if (profileError || !profile) throw new Error("Perfil no encontrado");
 
         const token = await generateSetupToken(user_id);
-        await sendSetupLinkEmail(profile.email, profile.full_name, token);
+        await sendSetupLinkEmail(profile.email, profile.full_name, token, site_url);
 
         return new Response(
           JSON.stringify({ ok: true }),
@@ -725,6 +727,7 @@ Deno.serve(async (req) => {
       }
 
       case "migrate-all": {
+        const { site_url } = params as { site_url?: string };
         const { data: profiles, error: profilesError } = await supabaseColegio
           .from("profiles")
           .select("id, email, full_name, role")
@@ -746,7 +749,7 @@ Deno.serve(async (req) => {
             });
 
             const token = await generateSetupToken(p.id);
-            await sendSetupLinkEmail(p.email, p.full_name, token);
+            await sendSetupLinkEmail(p.email, p.full_name, token, site_url);
             count++;
           } catch (e) {
             console.error(`Error migrando usuario ${p.id}:`, e);
