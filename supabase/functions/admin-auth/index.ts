@@ -11,10 +11,6 @@ const supabaseRTK = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 });
 const supabaseAuth = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-function generatePin(): string {
-  return Array.from({ length: 8 }, () => Math.floor(Math.random() * 10)).join("");
-}
-
 function generateSecurePassword(): string {
   const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
   return Array.from({ length: 20 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
@@ -64,42 +60,6 @@ async function verifyPin(pin: string, hash: string): Promise<boolean> {
 
 const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
 const SITE_URL = Deno.env.get("SITE_URL") || "http://localhost:5173";
-
-async function sendPinEmail(email: string, pin: string, fullName: string) {
-  if (!SENDGRID_API_KEY) {
-    console.warn("SENDGRID_API_KEY no configurada, email no enviado");
-    return;
-  }
-  const html = `
-    <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
-      <h2 style="color:#6366f1">Agenda Escolar</h2>
-      <p>Hola <strong>${fullName}</strong>,</p>
-      <p>Tu código de acceso es:</p>
-      <div style="font-size:32px;letter-spacing:8px;font-weight:bold;color:#6366f1;text-align:center;padding:24px;background:#eef2ff;border-radius:12px;margin:16px 0">
-        ${pin}
-      </div>
-      <p>Ingresa en <a href="${SITE_URL}/login?email=${encodeURIComponent(email)}" style="color:#6366f1">${SITE_URL}</a> con este código.</p>
-      <p style="color:#94a3b8;font-size:12px">Este código es personal e intransferible. No lo compartas.</p>
-    </div>
-  `;
-  const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${SENDGRID_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      personalizations: [{ to: [{ email }] }],
-      from: { email: "docuarchviosite@gmail.com", name: "Agenda Escolar" },
-      subject: "Tu código de acceso - Agenda Escolar",
-      content: [{ type: "text/html", value: html }],
-    }),
-  });
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Error al enviar email a ${email}: ${body}`);
-  }
-}
 
 async function sendSetupLinkEmail(email: string, fullName: string, token: string) {
   if (!SENDGRID_API_KEY) {
@@ -318,24 +278,19 @@ Deno.serve(async (req) => {
           );
         }
 
-        if (profile.setup_complete) {
-          const pin = generatePin();
-          const pinHash = await hashPin(pin);
+        // Invalidar PIN actual y enviar setup link
+        await supabaseColegio
+          .from("profiles")
+          .update({ pin_hash: null, setup_complete: false })
+          .eq("id", profile.id);
 
-          await supabaseAuth.auth.admin.updateUserById(profile.id, {
-            password: pin,
-          });
+        const tempPassword = generateSecurePassword();
+        await supabaseAuth.auth.admin.updateUserById(profile.id, {
+          password: tempPassword,
+        });
 
-          await supabaseColegio
-            .from("profiles")
-            .update({ pin_hash: pinHash })
-            .eq("id", profile.id);
-
-          await sendPinEmail(profile.email, pin, profile.full_name);
-        } else {
-          const token = await generateSetupToken(profile.id);
-          await sendSetupLinkEmail(profile.email, profile.full_name, token);
-        }
+        const token = await generateSetupToken(profile.id);
+        await sendSetupLinkEmail(profile.email, profile.full_name, token);
 
         return new Response(
           JSON.stringify({ ok: true }),
