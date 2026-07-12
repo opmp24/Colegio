@@ -1,3 +1,4 @@
+import { useCallback, useMemo } from "react";
 import { supabase } from "@/lib/supabase";
 import type { UserRole } from "@/types";
 
@@ -41,7 +42,7 @@ interface MigrateAllResult {
 }
 
 export function useAdminAuth() {
-  const callFunction = async <T>(body: Record<string, unknown>): Promise<T> => {
+  const callFunction = useCallback(async <T>(body: Record<string, unknown>): Promise<T> => {
     const { data, error } = await supabase.functions.invoke(ADMIN_FUNCTION, {
       body: { site_url: window.location.origin, ...body },
     });
@@ -57,45 +58,45 @@ export function useAdminAuth() {
     }
     if (!data.ok) throw new Error(data.error ?? "Error desconocido");
     return data as T;
-  };
+  }, []);
 
-  const createUser = (params: CreateUserParams) =>
-    callFunction<CreateUserResult>({ action: "create-user", ...params });
+  const createUser = useCallback((params: CreateUserParams) =>
+    callFunction<CreateUserResult>({ action: "create-user", ...params }), [callFunction]);
 
-  const resetPin = (userId: string) =>
-    callFunction<ResetPinResult>({ action: "reset-pin", user_id: userId });
+  const resetPin = useCallback((userId: string) =>
+    callFunction<ResetPinResult>({ action: "reset-pin", user_id: userId }), [callFunction]);
 
-  const toggleBlock = (userId: string) =>
-    callFunction<ToggleBlockResult>({ action: "toggle-block", user_id: userId });
+  const toggleBlock = useCallback((userId: string) =>
+    callFunction<ToggleBlockResult>({ action: "toggle-block", user_id: userId }), [callFunction]);
 
-  const sendInfo = (userId: string) =>
-    callFunction<{ ok: boolean }>({ action: "send-info", user_id: userId });
+  const sendInfo = useCallback((userId: string) =>
+    callFunction<{ ok: boolean }>({ action: "send-info", user_id: userId }), [callFunction]);
 
-  const deleteUser = (userId: string) =>
-    callFunction<{ ok: boolean }>({ action: "delete-user", user_id: userId });
+  const deleteUser = useCallback((userId: string) =>
+    callFunction<{ ok: boolean }>({ action: "delete-user", user_id: userId }), [callFunction]);
 
-  const updatePermissions = (userId: string, permissions: string[]) =>
-    callFunction<{ ok: boolean }>({ action: "update-permissions", user_id: userId, permissions });
+  const updatePermissions = useCallback((userId: string, permissions: string[]) =>
+    callFunction<{ ok: boolean }>({ action: "update-permissions", user_id: userId, permissions }), [callFunction]);
 
-  const updateCourses = (userId: string, courseIds: string[]) =>
-    callFunction<{ ok: boolean }>({ action: "update-courses", user_id: userId, course_ids: courseIds });
+  const updateCourses = useCallback((userId: string, courseIds: string[]) =>
+    callFunction<{ ok: boolean }>({ action: "update-courses", user_id: userId, course_ids: courseIds }), [callFunction]);
 
-  const sendSetupLink = (userId: string) =>
-    callFunction<{ ok: boolean }>({ action: "send-setup-link", user_id: userId });
+  const sendSetupLink = useCallback((userId: string) =>
+    callFunction<{ ok: boolean }>({ action: "send-setup-link", user_id: userId }), [callFunction]);
 
-  const verifySetupToken = (token: string) =>
-    callFunction<VerifyTokenResult>({ action: "verify-setup-token", token });
+  const verifySetupToken = useCallback((token: string) =>
+    callFunction<VerifyTokenResult>({ action: "verify-setup-token", token }), [callFunction]);
 
-  const completeSetup = (token: string, pin: string) =>
-    callFunction<CompleteSetupResult>({ action: "complete-setup", token, pin });
+  const completeSetup = useCallback((token: string, pin: string) =>
+    callFunction<CompleteSetupResult>({ action: "complete-setup", token, pin }), [callFunction]);
 
-  const changePin = (currentPin: string, newPin: string) =>
-    callFunction<{ ok: boolean }>({ action: "change-pin", current_pin: currentPin, new_pin: newPin });
+  const changePin = useCallback((currentPin: string, newPin: string) =>
+    callFunction<{ ok: boolean }>({ action: "change-pin", current_pin: currentPin, new_pin: newPin }), [callFunction]);
 
-  const migrateAll = () =>
-    callFunction<MigrateAllResult>({ action: "migrate-all" });
+  const migrateAll = useCallback(() =>
+    callFunction<MigrateAllResult>({ action: "migrate-all" }), [callFunction]);
 
-  return {
+  return useMemo(() => ({
     createUser,
     resetPin,
     toggleBlock,
@@ -108,5 +109,5 @@ export function useAdminAuth() {
     completeSetup,
     changePin,
     migrateAll,
-  };
+  }), [createUser, resetPin, toggleBlock, sendInfo, deleteUser, updatePermissions, updateCourses, sendSetupLink, verifySetupToken, completeSetup, changePin, migrateAll]);
 }

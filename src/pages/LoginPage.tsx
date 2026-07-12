@@ -327,9 +327,9 @@ export default function LoginPage() {
                 <h2 className="text-xl font-semibold text-gray-700 dark:text-slate-200">Recuperar código de acceso</h2>
                 <button
                   onClick={handleRecoveryClose}
-                  className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300"
+                  className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 p-3 border-0"
                 >
-                  ×
+                  x
                 </button>
               </div>
               <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
@@ -383,7 +383,7 @@ export default function LoginPage() {
                 <h2 className="text-xl font-semibold text-gray-700 dark:text-slate-200">Solicitar acceso</h2>
                 <button
                   onClick={handleRequestClose}
-                  className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300"
+                  className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 p-3 border-0"
                 >
                   ×
                 </button>

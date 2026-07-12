@@ -176,7 +176,6 @@ Deno.serve(async (req) => {
           if (upsertError) throw upsertError;
 
           await supabaseAuth.auth.admin.updateUserById(existing.id, {
-            password: tempPassword,
             user_metadata: { full_name, role },
           });
 
@@ -242,11 +241,6 @@ Deno.serve(async (req) => {
           .update({ pin_hash: null, setup_complete: false })
           .eq("id", user_id);
 
-        const tempPassword = generateSecurePassword();
-        await supabaseAuth.auth.admin.updateUserById(user_id, {
-          password: tempPassword,
-        });
-
         const token = await generateSetupToken(user_id);
         await sendSetupLinkEmail(profile.email!, profile.full_name, token, site_url);
 
@@ -285,11 +279,6 @@ Deno.serve(async (req) => {
           .from("profiles")
           .update({ pin_hash: null, setup_complete: false })
           .eq("id", profile.id);
-
-        const tempPassword = generateSecurePassword();
-        await supabaseAuth.auth.admin.updateUserById(profile.id, {
-          password: tempPassword,
-        });
 
         const token = await generateSetupToken(profile.id);
         await sendSetupLinkEmail(profile.email, profile.full_name, token, site_url);
@@ -367,6 +356,40 @@ Deno.serve(async (req) => {
 
         return new Response(
           JSON.stringify({ ok: true, auth_deleted: !deleteAuthError }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      case "force-delete-user": {
+        const { user_id } = params as { user_id: string };
+
+        if (!user_id) {
+          return new Response(
+            JSON.stringify({ error: "user_id requerido" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Nullify FK refs first
+        await supabaseColegio.from("events").update({ created_by: null }).eq("created_by", user_id);
+        await supabaseColegio.from("access_requests").update({ approved_by: null }).eq("approved_by", user_id);
+
+        // Delete profile
+        await supabaseColegio.from("profiles").delete().eq("id", user_id);
+
+        // Delete auth user directly using auth schema client
+        const supabaseAuthRaw = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+          db: { schema: "auth" },
+        });
+        const { error: rawDelError } = await supabaseAuthRaw
+          .from("users")
+          .delete()
+          .eq("id", user_id);
+
+        if (rawDelError) throw new Error(`Error al eliminar auth user: ${JSON.stringify(rawDelError)}`);
+
+        return new Response(
+          JSON.stringify({ ok: true }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
@@ -639,9 +662,10 @@ Deno.serve(async (req) => {
 
         if (updateError) throw updateError;
 
-        await supabaseAuth.auth.admin.updateUserById(record.user_id, {
-          password: pin,
+        const { error: authError } = await supabaseAuth.auth.admin.updateUserById(record.user_id, {
+          password: `pin_${pin}`,
         });
+        if (authError) throw new Error(`Error al actualizar contraseña: ${authError.message}`);
 
         const { error: markError } = await supabaseColegio
           .from("setup_tokens")
@@ -716,9 +740,10 @@ Deno.serve(async (req) => {
 
         if (updateError) throw updateError;
 
-        await supabaseAuth.auth.admin.updateUserById(user.id, {
-          password: new_pin,
+        const { error: authError } = await supabaseAuth.auth.admin.updateUserById(user.id, {
+          password: `pin_${new_pin}`,
         });
+        if (authError) throw new Error(`Error al actualizar contraseña: ${authError.message}`);
 
         return new Response(
           JSON.stringify({ ok: true }),
@@ -742,11 +767,6 @@ Deno.serve(async (req) => {
               .from("profiles")
               .update({ pin_hash: null, setup_complete: false, pin: null })
               .eq("id", p.id);
-
-            const tempPassword = generateSecurePassword();
-            await supabaseAuth.auth.admin.updateUserById(p.id, {
-              password: tempPassword,
-            });
 
             const token = await generateSetupToken(p.id);
             await sendSetupLinkEmail(p.email, p.full_name, token, site_url);

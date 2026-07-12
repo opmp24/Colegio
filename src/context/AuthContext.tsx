@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { error: authError } = await supabase.auth.signInWithPassword({
       email: loginData.auth_email,
-      password: pin,
+      password: `pin_${pin}`,
     });
 
     if (authError) throw new Error("Error al iniciar sesión");

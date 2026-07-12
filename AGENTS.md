@@ -227,3 +227,4 @@ src/
 21. siempre usar `codegraph_explore` como primera herramienta para entender flujos de código, en lugar de `read`/`grep`/`glob`
 22. Verificación cruzada migración/edge function: Toda nueva tabla creada en migración debe verificar que el schema coincide con el cliente Supabase que la edge function usa. Si la edge function usa supabaseColegio (schema Colegio), la tabla debe ir en schema Colegio. Si va en public, usar supabaseAuth. Documentar esta decisión en el PR.
 23. solo ejecuta instrucciones explicitas
+24. para cambios en supabase, siempre verifica si tienes acceso con el CLI
