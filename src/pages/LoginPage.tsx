@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, lazy, Suspense, type KeyboardEvent, type ClipboardEvent } from "react";
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import gsap from "gsap";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/lib/supabase";
@@ -11,7 +11,9 @@ const LetterA3d = lazy(() => import("@/components/LetterA3d/LetterA3d"));
 
 export default function LoginPage() {
   const { user, signIn } = useAuth();
-  const [digits, setDigits] = useState<string[]>(["", "", "", "", "", "", "", ""]);
+  const [searchParams] = useSearchParams();
+  const [loginEmail, setLoginEmail] = useState(searchParams.get("email") ?? "");
+  const [digits, setDigits] = useState<string[]>(["", "", "", ""]);
   const [error, setError] = useState("");
   const [blocked, setBlocked] = useState(false);
   const [showRecovery, setShowRecovery] = useState(false);
@@ -28,6 +30,7 @@ export default function LoginPage() {
   const [requestSuccess, setRequestSuccess] = useState(false);
   const [requestLoading, setRequestLoading] = useState(false);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const emailRef = useRef<HTMLInputElement>(null);
   const headerRef = useRef<HTMLElement>(null);
   const formRef = useRef<HTMLElement>(null);
   const footerRef = useRef<HTMLElement>(null);
@@ -37,14 +40,21 @@ export default function LoginPage() {
     const tl = gsap.timeline({ defaults: { duration: 0.5, ease: "power3.out" } });
     tl.fromTo(headerRef.current, { autoAlpha: 0, y: -20 }, { autoAlpha: 1, y: 0 })
       .fromTo(formRef.current, { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0 }, "-=0.2")
-      .fromTo("#pin-inputs > input", { autoAlpha: 0, scale: 0.8 }, { autoAlpha: 1, scale: 1, stagger: 0.04 }, "-=0.1")
+      .fromTo("#pin-inputs input", { autoAlpha: 0, scale: 0.8 }, { autoAlpha: 1, scale: 1, stagger: 0.04 }, "-=0.1")
       .fromTo(footerRef.current, { autoAlpha: 0 }, { autoAlpha: 1 }, "-=0.2");
   }, []);
+
+  useEffect(() => {
+    if (loginEmail && digits.every((d) => d)) {
+      const timer = setTimeout(() => handleSubmit(), 120);
+      return () => clearTimeout(timer);
+    }
+  }, [digits, loginEmail]);
 
   if (user) return <Navigate to="/" replace />;
 
   const focusNext = (idx: number) => {
-    if (idx < 7) inputRefs.current[idx + 1]?.focus();
+    if (idx < 3) inputRefs.current[idx + 1]?.focus();
   };
 
   const focusPrev = (idx: number) => {
@@ -57,7 +67,6 @@ export default function LoginPage() {
     next[idx] = digit;
     setDigits(next);
     if (digit) focusNext(idx);
-    if (next.every((d) => d)) setTimeout(() => handleSubmit(next.join("")), 120);
   };
 
   const handleKeyDown = (idx: number, e: KeyboardEvent<HTMLInputElement>) => {
@@ -67,22 +76,21 @@ export default function LoginPage() {
 
   const handlePaste = (e: ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
-    const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 8);
+    const text = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 4);
     const next = [...digits];
     for (let i = 0; i < text.length; i++) next[i] = text[i];
     setDigits(next);
-    const focusIdx = Math.min(text.length, 7);
+    const focusIdx = Math.min(text.length, 3);
     inputRefs.current[focusIdx]?.focus();
-    if (next.every((d) => d)) setTimeout(() => handleSubmit(next.join("")), 120);
   };
 
-  const handleSubmit = async (customPin?: string) => {
-    const pin = customPin ?? digits.join("");
-    if (pin.length !== 8) return;
+  const handleSubmit = async () => {
+    if (!loginEmail || digits.some((d) => !d)) return;
+    const pin = digits.join("");
     setError("");
     setBlocked(false);
     try {
-      const result = await signIn(pin);
+      const result = await signIn(loginEmail, pin);
       if (result.blocked) setBlocked(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Error al iniciar sesión");
@@ -95,7 +103,6 @@ export default function LoginPage() {
       return;
     }
 
-    // Validación básica de formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(recoveryEmail)) {
       setRecoveryError("Por favor ingresa un correo electrónico válido");
@@ -107,11 +114,11 @@ export default function LoginPage() {
     setRecoverySuccess(false);
 
     try {
-      // Llamar a la Edge Function para recuperación de PIN
       const { data, error } = await supabase.functions.invoke("admin-auth", {
         body: {
           action: "recover-pin",
           email: recoveryEmail,
+          site_url: window.location.origin,
         },
       });
 
@@ -132,8 +139,6 @@ export default function LoginPage() {
       setRecoveryLoading(false);
     } catch (err) {
       setRecoveryLoading(false);
-      // No revelamos si el email existe o no por seguridad
-      // Pero seguimos el requisito específico del usuario de mostrar mensaje específico
       setRecoveryError(
         err instanceof Error
           ? err.message
@@ -216,8 +221,7 @@ export default function LoginPage() {
         </header>
 
         <section ref={formRef} className="w-full backdrop-blur-sm p-8 rounded-3xl shadow-xl dark:shadow-slate-900/50 border border-white/40 dark:border-slate-700/40">
-          <h2 className="text-xl font-semibold text-gray-700 dark:text-slate-200 mb-2 text-center">Ingresa tu código</h2>
-          <p className="text-sm text-gray-400 dark:text-slate-500 text-center mb-6">Usa el código de 8 dígitos que te entregó tu establecimiento.</p>
+          <h2 className="text-xl font-semibold text-gray-700 dark:text-slate-200 mb-2 text-center">Iniciar sesión</h2>
 
           {blocked && (
             <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl text-center">
@@ -226,9 +230,34 @@ export default function LoginPage() {
             </div>
           )}
 
+          <div className="mb-4">
+            <label htmlFor="login-email" className="block text-sm font-medium text-gray-600 dark:text-slate-400 mb-1.5">
+              Correo electrónico
+            </label>
+            <input
+              id="login-email"
+              ref={emailRef}
+              type="email"
+              inputMode="email"
+              autoComplete="username"
+              value={loginEmail}
+              onChange={(e) => setLoginEmail(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && loginEmail) {
+                  const firstInput = inputRefs.current[0];
+                  if (firstInput) firstInput.focus();
+                }
+              }}
+              placeholder="correo@colegio.cl"
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-primary-500 focus:ring focus:ring-primary-200 transition-all bg-white dark:bg-slate-700 dark:text-white dark:placeholder-slate-400 outline-none"
+            />
+          </div>
+
+          <p className="text-sm text-gray-400 dark:text-slate-500 text-center mb-4">Ingresa tu código de acceso de 4 dígitos</p>
+
           <div id="pin-inputs" className="flex flex-col items-center gap-2 mb-6">
             <div className="flex gap-2 justify-center">
-              {digits.slice(0, 4).map((d, i) => (
+              {digits.map((d, i) => (
                 <input
                   key={i}
                   ref={(el) => { inputRefs.current[i] = el; }}
@@ -239,22 +268,7 @@ export default function LoginPage() {
                   onChange={(e) => handleChange(i, e.target.value)}
                   onKeyDown={(e) => handleKeyDown(i, e)}
                   onPaste={i === 0 ? handlePaste : undefined}
-                  className="w-10 h-12 text-center text-lg font-bold rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-primary-500 focus:ring focus:ring-primary-200 transition-all bg-white dark:bg-slate-700 dark:text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                />
-              ))}
-            </div>
-            <div className="flex gap-2 justify-center">
-              {digits.slice(4, 8).map((d, i) => (
-                <input
-                  key={i + 4}
-                  ref={(el) => { inputRefs.current[i + 4] = el; }}
-                  type={showPin ? "text" : "password"}
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={d}
-                  onChange={(e) => handleChange(i + 4, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(i + 4, e)}
-                  className="w-10 h-12 text-center text-lg font-bold rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-primary-500 focus:ring focus:ring-primary-200 transition-all bg-white dark:bg-slate-700 dark:text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  className="w-12 h-14 text-center text-xl font-bold rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-primary-500 focus:ring focus:ring-primary-200 transition-all bg-white dark:bg-slate-700 dark:text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
               ))}
             </div>
@@ -263,7 +277,7 @@ export default function LoginPage() {
           <button
             type="button"
             onClick={() => setShowPin(!showPin)}
-            className="mx-auto mb-4 flex items-center gap-2 text-xs font-medium text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors"
+            className="mx-auto mb-4 flex items-center gap-2 text-xs font-medium text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 transition-colors border-0"
           >
             {showPin ? (
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -281,8 +295,8 @@ export default function LoginPage() {
           {error && <p className="text-red-500 dark:text-red-400 text-sm text-center mb-4">{error}</p>}
 
           <button
-            onClick={() => handleSubmit()}
-            disabled={digits.some((d) => !d)}
+            onClick={handleSubmit}
+            disabled={!loginEmail || digits.some((d) => !d)}
             className="w-full bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-semibold py-4 rounded-xl shadow-lg shadow-primary-100 dark:shadow-primary-900/30 transition-all active:scale-[0.98] disabled:shadow-none"
           >
             Ingresar
@@ -292,13 +306,13 @@ export default function LoginPage() {
           <div className="mt-4 flex flex-col items-center gap-2">
             <button
               onClick={() => setShowRecovery(true)}
-              className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 underline"
+              className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 underline border-0"
             >
               ¿Olvidó su PIN?
             </button>
             <button
               onClick={() => setShowRequestAccess(true)}
-              className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 underline"
+              className="text-sm font-medium text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 underline border-0"
             >
               Solicitar acceso
             </button>
@@ -313,19 +327,19 @@ export default function LoginPage() {
                 <h2 className="text-xl font-semibold text-gray-700 dark:text-slate-200">Recuperar código de acceso</h2>
                 <button
                   onClick={handleRecoveryClose}
-                  className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300"
+                  className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 p-3 border-0"
                 >
-                  ×
+                  x
                 </button>
               </div>
               <p className="text-sm text-gray-500 dark:text-slate-400 mb-4">
-                Ingresa tu correo electrónico registrado para recibir un nuevo código de acceso.
+                Ingresa tu correo electrónico registrado para recibir instrucciones de recuperación.
               </p>
 
               {recoverySuccess && (
                 <div className="mb-4 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl">
                   <p className="text-sm font-medium text-green-600 dark:text-green-400">
-                    Si el correo está registrado, se ha enviado un nuevo código de acceso a tu email.
+                    Si el correo está registrado, se ha enviado un enlace de recuperación a tu email.
                   </p>
                   <p className="text-xs text-green-500 dark:text-green-400 mt-1">
                     Revisa tu bandeja de entrada (y carpeta de spam).
@@ -369,7 +383,7 @@ export default function LoginPage() {
                 <h2 className="text-xl font-semibold text-gray-700 dark:text-slate-200">Solicitar acceso</h2>
                 <button
                   onClick={handleRequestClose}
-                  className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300"
+                  className="text-gray-400 dark:text-slate-500 hover:text-gray-600 dark:hover:text-slate-300 p-3 border-0"
                 >
                   ×
                 </button>

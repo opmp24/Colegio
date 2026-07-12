@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { db } from "@/lib/db";
 import type { Profile } from "@/types";
 
@@ -14,12 +14,10 @@ export function useProfiles() {
 }
 
 export function useUpdateProfile() {
-  const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...data }: { id: string; [key: string]: any }) => {
       const { error } = await db.from("profiles").update(data).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["profiles"] }),
   });
 }

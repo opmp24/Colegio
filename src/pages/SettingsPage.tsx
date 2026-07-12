@@ -1,11 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/context/AuthContext";
-import { useCourses } from "@/hooks/useCourses";
-import { useEvents } from "@/hooks/useEvents";
-import { useProfiles } from "@/hooks/useProfiles";
 import { useTheme } from "@/hooks/useTheme";
-import { useUpdateProfile } from "@/hooks/useProfiles";
+import { useAdminAuth } from "@/hooks/useAdminAuth";
+import { db } from "@/lib/db";
 import { useToast } from "@/hooks/useToast";
 import InstallButton from "@/components/InstallButton/InstallButton";
 import IosInstallGuide from "@/components/IosInstallGuide/IosInstallGuide";
@@ -16,17 +15,21 @@ import { AVATAR_ICONS, AVATAR_COLORS } from "@/lib/avatar";
 export default function SettingsPage() {
   const navigate = useNavigate();
   const { profile, signOut, refreshProfile } = useAuth();
-  const { data: courses } = useCourses();
-  const { data: events } = useEvents();
-  const { data: users } = useProfiles();
   const { isDark, toggle: toggleDark } = useTheme();
-  const updateProfile = useUpdateProfile();
+  const admin = useAdminAuth();
   const toast = useToast();
+  const queryClient = useQueryClient();
 
   const [selectedIcon, setSelectedIcon] = useState(profile?.avatar_icon ?? "");
   const [selectedColor, setSelectedColor] = useState(profile?.avatar_color ?? AVATAR_COLORS[0].value);
   const [showAllIcons, setShowAllIcons] = useState(false);
   const [savingAvatar, setSavingAvatar] = useState(false);
+
+  const [pinDigits, setPinDigits] = useState<string[]>(["", "", "", ""]);
+  const [confirmPinDigits, setConfirmPinDigits] = useState<string[]>(["", "", "", ""]);
+  const [showChangePin, setShowChangePin] = useState(false);
+  const [changingPin, setChangingPin] = useState(false);
+  const [pinError, setPinError] = useState("");
 
   const avatarChanged = selectedIcon !== (profile?.avatar_icon ?? "") || selectedColor !== (profile?.avatar_color ?? AVATAR_COLORS[0].value);
 
@@ -34,13 +37,42 @@ export default function SettingsPage() {
     if (!profile || !avatarChanged) return;
     setSavingAvatar(true);
     try {
-      await updateProfile.mutateAsync({ id: profile.id, avatar_icon: selectedIcon, avatar_color: selectedColor });
+      const { error } = await db.from("profiles").update({ avatar_icon: selectedIcon, avatar_color: selectedColor }).eq("id", profile.id);
+      if (error) throw error;
+      queryClient.invalidateQueries({ queryKey: ["profiles"] });
+      queryClient.invalidateQueries({ queryKey: ["events"] });
       await refreshProfile();
       toast.success("Avatar actualizado");
-    } catch {
-      toast.error("Error al guardar avatar");
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "Error al guardar avatar";
+      toast.error(msg);
     } finally {
       setSavingAvatar(false);
+    }
+  };
+
+  const handleChangePin = async () => {
+    const currentPin = pinDigits.join("");
+    const newPin = confirmPinDigits.join("");
+
+    if (currentPin.length !== 4 || newPin.length !== 4) return;
+    if (currentPin === newPin) {
+      setPinError("El nuevo PIN debe ser diferente al actual");
+      return;
+    }
+
+    setChangingPin(true);
+    setPinError("");
+    try {
+      await admin.changePin(currentPin, newPin);
+      toast.success("PIN cambiado correctamente");
+      setShowChangePin(false);
+      setPinDigits(["", "", "", ""]);
+      setConfirmPinDigits(["", "", "", ""]);
+    } catch (err) {
+      setPinError(err instanceof Error ? err.message : "Error al cambiar PIN");
+    } finally {
+      setChangingPin(false);
     }
   };
 
@@ -140,6 +172,124 @@ export default function SettingsPage() {
         )}
       </section>
 
+      {/* Cambiar PIN */}
+      <section className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm dark:shadow-slate-900/50">
+        <h2 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Seguridad</h2>
+        {!showChangePin ? (
+          <button
+            onClick={() => setShowChangePin(true)}
+            className="w-full flex items-center justify-between py-3 px-4 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+          >
+            <div className="flex items-center gap-3">
+              <svg className="w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+              </svg>
+              <span className="text-sm font-medium text-slate-700 dark:text-slate-300">Cambiar PIN</span>
+            </div>
+            <svg className="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        ) : (
+          <div className="space-y-4">
+            <p className="text-sm text-slate-600 dark:text-slate-400">Ingresa tu PIN actual y el nuevo PIN de 4 dígitos.</p>
+
+            {pinError && (
+              <p className="text-red-500 dark:text-red-400 text-sm text-center">{pinError}</p>
+            )}
+
+            <div>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">PIN actual</p>
+              <div className="flex gap-2 justify-center">
+                {pinDigits.map((d, i) => (
+                  <input
+                    key={i}
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={d}
+                    onChange={(e) => {
+                      const digit = e.target.value.replace(/\D/g, "").slice(0, 1);
+                      const next = [...pinDigits];
+                      next[i] = digit;
+                      setPinDigits(next);
+                      if (digit && i < 3) {
+                        const nextInput = document.getElementById(`pin-current-${i + 1}`);
+                        nextInput?.focus();
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Backspace" && !pinDigits[i] && i > 0) {
+                        const prevInput = document.getElementById(`pin-current-${i - 1}`);
+                        prevInput?.focus();
+                      }
+                    }}
+                    id={`pin-current-${i}`}
+                    className="w-12 h-14 text-center text-xl font-bold rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-primary-500 focus:ring focus:ring-primary-200 transition-all bg-white dark:bg-slate-700 dark:text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                    autoFocus={i === 0}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2">Nuevo PIN</p>
+              <div className="flex gap-2 justify-center">
+                {confirmPinDigits.map((d, i) => (
+                  <input
+                    key={i}
+                    type="password"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={d}
+                    onChange={(e) => {
+                      const digit = e.target.value.replace(/\D/g, "").slice(0, 1);
+                      const next = [...confirmPinDigits];
+                      next[i] = digit;
+                      setConfirmPinDigits(next);
+                      if (digit && i < 3) {
+                        const nextInput = document.getElementById(`pin-new-${i + 1}`);
+                        nextInput?.focus();
+                      }
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === "Backspace" && !confirmPinDigits[i] && i > 0) {
+                        const prevInput = document.getElementById(`pin-new-${i - 1}`);
+                        prevInput?.focus();
+                      }
+                    }}
+                    id={`pin-new-${i}`}
+                    className="w-12 h-14 text-center text-xl font-bold rounded-xl border-2 border-gray-200 dark:border-gray-600 focus:border-primary-500 focus:ring focus:ring-primary-200 transition-all bg-white dark:bg-slate-700 dark:text-white outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowChangePin(false);
+                  setPinDigits(["", "", "", ""]);
+                  setConfirmPinDigits(["", "", "", ""]);
+                  setPinError("");
+                }}
+                disabled={changingPin}
+                className="flex-1 py-3 rounded-xl border border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-400 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition-all"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleChangePin}
+                disabled={changingPin || pinDigits.some((d) => !d) || confirmPinDigits.some((d) => !d)}
+                className="flex-1 bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-semibold py-3 rounded-xl text-sm transition-all"
+              >
+                {changingPin ? "Cambiando..." : "Cambiar PIN"}
+              </button>
+            </div>
+          </div>
+        )}
+      </section>
+
       {/* Apariencia */}
       <section className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm dark:shadow-slate-900/50">
         <h2 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Apariencia</h2>
@@ -221,25 +371,6 @@ export default function SettingsPage() {
           </svg>
           Cerrar sesión
         </button>
-      </section>
-
-      {/* Stats */}
-      <section className="bg-white dark:bg-slate-800 rounded-xl p-5 shadow-sm dark:shadow-slate-900/50">
-        <h2 className="text-sm font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest mb-4">Resumen del Sistema</h2>
-        <div className="grid grid-cols-3 gap-4">
-          <div className="text-center">
-            <p className="text-2xl font-black text-primary-600 dark:text-primary-400">{courses?.length ?? 0}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Cursos</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-black text-primary-600 dark:text-primary-400">{events?.length ?? 0}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Eventos</p>
-          </div>
-          <div className="text-center">
-            <p className="text-2xl font-black text-primary-600 dark:text-primary-400">{users?.length ?? 0}</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Usuarios</p>
-          </div>
-        </div>
       </section>
 
       {/* App Info */}

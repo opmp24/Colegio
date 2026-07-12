@@ -34,10 +34,10 @@ export default function UsersPage() {
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<UserRole>("usuario");
   const [courseIds, setCourseIds] = useState<string[]>([]);
-  const [newPin, setNewPin] = useState<string | null>(null);
   const [expandedCourses, setExpandedCourses] = useState<string | null>(null);
   const [approvingRequest, setApprovingRequest] = useState<string | null>(null);
   const [approveCourseIds, setApproveCourseIds] = useState<string[]>([]);
+  const [migrating, setMigrating] = useState(false);
 
   const { data: courseMembers, refetch: refetchCourseMembers } = useQuery({
     queryKey: ["course-members"],
@@ -90,18 +90,17 @@ export default function UsersPage() {
   const handleCreate = async () => {
     if (!name || !email) return;
     try {
-      const result = await createUserMutation.mutateAsync({
+      await createUserMutation.mutateAsync({
         full_name: name,
         email,
         role,
         course_ids: courseIds.length ? courseIds : undefined,
       });
-      setNewPin(result.pin);
       setName("");
       setEmail("");
       setRole("usuario");
       setCourseIds([]);
-      toast.success("Usuario creado correctamente");
+      toast.success("Usuario creado correctamente. Se ha enviado un enlace de configuración a su correo.");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error al crear usuario");
     }
@@ -125,13 +124,12 @@ export default function UsersPage() {
       return;
     }
     try {
-      const result = await createUserMutation.mutateAsync({
+      await createUserMutation.mutateAsync({
         full_name: req.full_name,
         email: req.email,
         role: "usuario",
         course_ids: approveCourseIds,
       });
-      setNewPin(result.pin);
       const { error: updateError } = await db
         .from("access_requests")
         .update({ status: "approved", approved_at: new Date().toISOString(), approved_by: currentUser?.id })
@@ -141,22 +139,20 @@ export default function UsersPage() {
       setApproveCourseIds([]);
       refetchRequests();
       refetch();
-      toast.success(`Acceso aprobado para ${req.full_name}`);
+      toast.success(`Acceso aprobado para ${req.full_name}. Se ha enviado un enlace de configuración a su correo.`);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Error al aprobar solicitud");
     }
   };
 
-  const handleResetPin = async (userId: string) => {
-    const ok = await confirm({ title: "Resetear código", message: "¿Generar un nuevo código para este usuario?", confirmLabel: "Resetear", variant: "danger" });
+  const handleSendSetupLink = async (userId: string) => {
+    const ok = await confirm({ title: "Reenviar enlace", message: "¿Enviar un nuevo enlace de configuración a este usuario?", confirmLabel: "Enviar", variant: "default" });
     if (!ok) return;
     try {
-      const result = await admin.resetPin(userId);
-      setNewPin(result.pin);
-      refetch();
-      toast.success("Nuevo código generado");
+      await admin.sendSetupLink(userId);
+      toast.success("Enlace de configuración enviado al correo del usuario");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error al resetear código");
+      toast.error(err instanceof Error ? err.message : "Error al enviar enlace");
     }
   };
 
@@ -207,18 +203,49 @@ export default function UsersPage() {
     }
   };
 
+  const handleMigrateAll = async () => {
+    const ok = await confirm({
+      title: "Migrar todos los usuarios",
+      message: "¿Estás seguro? Se invalidarán todos los códigos actuales de alumnos y profesores, y se enviará un enlace de configuración a cada uno por correo.",
+      confirmLabel: "Migrar todos",
+      variant: "danger",
+    });
+    if (!ok) return;
+    setMigrating(true);
+    try {
+      const result = await admin.migrateAll();
+      toast.success(`Migración completada. Se enviaron ${result.count} enlaces de configuración.`);
+      refetch();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Error al migrar usuarios");
+    } finally {
+      setMigrating(false);
+    }
+  };
+
   return (
     <div className="px-4 py-4 space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-slate-800 dark:text-slate-100">Gestión de Usuarios</h1>
-{isTeacher && (
+        {isTeacher && (
+          <div className="flex gap-2">
+            {isAdmin && (
+              <button
+                onClick={handleMigrateAll}
+                disabled={migrating}
+                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-amber-300 dark:focus:ring-amber-800 text-sm"
+              >
+                {migrating ? "Migrando..." : "Migrar todos"}
+              </button>
+            )}
             <button
               onClick={() => setShowForm(!showForm)}
               className="px-4 py-2 bg-primary-600 text-white font-medium rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-300 dark:bg-primary-500 dark:hover:bg-primary-600 dark:focus:ring-primary-800"
             >
               {showForm ? "Cancelar" : "+ Nuevo"}
             </button>
-          )}
+          </div>
+        )}
       </div>
 
       {isTeacher && accessRequests && accessRequests.length > 0 && (
@@ -275,7 +302,7 @@ export default function UsersPage() {
                       disabled={createUserMutation.isPending || approveCourseIds.length === 0}
                       className="flex-1 text-xs font-semibold px-3 py-2 rounded-lg bg-primary-600 hover:bg-primary-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white transition-colors"
                     >
-                      {createUserMutation.isPending ? "Aprobando..." : "Confirmar y enviar código"}
+                      {createUserMutation.isPending ? "Aprobando..." : "Confirmar y enviar enlace"}
                     </button>
                     <button
                       onClick={() => { setApprovingRequest(null); setApproveCourseIds([]); }}
@@ -296,24 +323,6 @@ export default function UsersPage() {
             </div>
           ))}
         </section>
-      )}
-
-      {newPin && (
-        <div className="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-xl p-4">
-          <p className="text-sm font-bold text-primary-700 dark:text-primary-300 mb-1">Código generado</p>
-          <p className="text-2xl font-black text-primary-600 dark:text-primary-400 tracking-widest text-center py-2 select-all">
-            {newPin}
-          </p>
-          <p className="text-xs text-primary-500 dark:text-primary-400 text-center">
-            Código de acceso de 8 dígitos. Compártelo de forma segura con el usuario.
-          </p>
-          <button
-            onClick={() => setNewPin(null)}
-            className="mt-2 w-full text-xs font-semibold text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300"
-          >
-            Cerrar
-          </button>
-        </div>
       )}
 
       {showForm && (
@@ -391,13 +400,26 @@ export default function UsersPage() {
                     <p className="font-bold text-slate-800 dark:text-slate-100 truncate">{p.full_name}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400 truncate">{p.email ?? "Sin email"}</p>
                   </div>
-                  {isAdmin && currentUser?.id !== p.id && (
-                    <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${p.is_blocked ? "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30" : "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30"}`}
-                    >
-                      {p.is_blocked ? "Bloqueado" : "Activo"}
-                    </span>
-                  )}
+                  <div className="flex items-center gap-1.5">
+                    {isAdmin && currentUser?.id !== p.id && (
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${p.is_blocked ? "text-red-600 bg-red-50 dark:text-red-400 dark:bg-red-900/30" : "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30"}`}
+                      >
+                        {p.is_blocked ? "Bloqueado" : "Activo"}
+                      </span>
+                    )}
+                    {p.role !== "admin" && (
+                      <span
+                        className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                          p.setup_complete
+                            ? "text-green-600 bg-green-50 dark:text-green-400 dark:bg-green-900/30"
+                            : "text-amber-600 bg-amber-50 dark:text-amber-400 dark:bg-amber-900/30"
+                        }`}
+                      >
+                        {p.setup_complete ? "Completado" : "Pendiente"}
+                      </span>
+                    )}
+                  </div>
                 </div>
                 {isAdmin && (
                   <div className="mb-2">
@@ -460,11 +482,11 @@ export default function UsersPage() {
                         Enviar info
                       </button>
                       <button
-                        onClick={() => handleResetPin(p.id)}
-                        className="text-xs px-2.5 py-1.5 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-900/30 text-amber-700 dark:text-amber-400 font-semibold shadow-sm"
-                        title="Generar nuevo código"
+                        onClick={() => handleSendSetupLink(p.id)}
+                        className="text-xs px-2.5 py-1.5 rounded-lg border border-primary-200 dark:border-primary-800 bg-primary-50 dark:bg-primary-900/20 hover:bg-primary-100 dark:hover:bg-primary-900/30 text-primary-700 dark:text-primary-300 font-semibold shadow-sm"
+                        title="Enviar enlace de configuración"
                       >
-                        Resetear código
+                        Enviar enlace
                       </button>
                       <button
                         onClick={() => handleToggleBlock(p.id)}

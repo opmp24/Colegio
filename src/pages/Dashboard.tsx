@@ -272,6 +272,7 @@ export default function Dashboard() {
             <>
               {dayEvents.map((ev) => {
                 const subj = ev.subject_id ? subjectMap.get(ev.subject_id) : undefined;
+                const creator = (ev as any).creator;
                 return (
                   <EventCard
                     key={ev.id}
@@ -282,6 +283,9 @@ export default function Dashboard() {
                     subjectIcon={subj?.icon}
                     subjectColor={subj?.color}
                     evaluationTypes={evaluationTypes}
+                    creatorName={creator?.full_name}
+                    creatorIcon={creator?.avatar_icon}
+                    creatorColor={creator?.avatar_color}
                     onClick={() => setSelectedEvent(ev)}
                   />
                 );
@@ -314,6 +318,7 @@ export default function Dashboard() {
           <div className="space-y-3">
             {upcoming.map((ev) => {
               const subj = ev.subject_id ? subjectMap.get(ev.subject_id) : undefined;
+              const creator = (ev as any).creator;
               return (
                 <EventCard
                   key={ev.id}
@@ -324,6 +329,9 @@ export default function Dashboard() {
                   subjectIcon={subj?.icon}
                   subjectColor={subj?.color}
                   evaluationTypes={evaluationTypes}
+                  creatorName={creator?.full_name}
+                  creatorIcon={creator?.avatar_icon}
+                  creatorColor={creator?.avatar_color}
                   onClick={() => setSelectedEvent(ev)}
                 />
               );
@@ -340,6 +348,9 @@ export default function Dashboard() {
           subjectName={(() => { const subj = selectedEvent.subject_id ? subjectMap.get(selectedEvent.subject_id) : undefined; return subj?.name; })()}
           subjectIcon={(() => { const subj = selectedEvent.subject_id ? subjectMap.get(selectedEvent.subject_id) : undefined; return subj?.icon; })()}
           subjectColor={(() => { const subj = selectedEvent.subject_id ? subjectMap.get(selectedEvent.subject_id) : undefined; return subj?.color; })()}
+          creatorName={(selectedEvent as any).creator?.full_name}
+          creatorIcon={(selectedEvent as any).creator?.avatar_icon}
+          creatorColor={(selectedEvent as any).creator?.avatar_color}
           onClose={() => setSelectedEvent(null)}
         />
       )}

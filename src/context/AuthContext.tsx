@@ -7,7 +7,7 @@ interface AuthState {
   user: import("@supabase/supabase-js").User | null;
   profile: Profile | null;
   loading: boolean;
-  signIn: (pin: string) => Promise<{ blocked: boolean }>;
+  signIn: (email: string, pin: string) => Promise<{ blocked: boolean }>;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
 }
@@ -46,9 +46,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signIn = async (pin: string) => {
+  const signIn = async (email: string, pin: string) => {
     const { data: loginData, error: rpcError } = await db
-      .rpc("login_with_pin", { p_pin: pin })
+      .rpc("login_with_pin", { p_email: email, p_pin: pin })
       .single() as {
         data: { auth_email: string; user_id: string; full_name: string; role: string; is_blocked: boolean } | null;
         error: any;
@@ -62,7 +62,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { error: authError } = await supabase.auth.signInWithPassword({
       email: loginData.auth_email,
-      password: pin,
+      password: `pin_${pin}`,
     });
 
     if (authError) throw new Error("Error al iniciar sesión");

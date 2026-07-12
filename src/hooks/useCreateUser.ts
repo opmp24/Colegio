@@ -29,8 +29,9 @@ export function useCreateUser() {
         full_name: newUserData.full_name,
         email: newUserData.email,
         role: newUserData.role,
-        // These fields are not provided by the create-user function; we set sensible defaults
-        pin: "PENDING",
+        pin: null,
+        pin_hash: null,
+        setup_complete: false,
         is_blocked: false,
         avatar_url: null,
         avatar_icon: "",
@@ -60,8 +61,9 @@ export function useCreateUser() {
               ? {
                   ...user,
                   id: data.user_id,
-                  pin: data.pin,
-                  // Keep other fields from optimistic user (they should match variables)
+                  pin: null,
+                  pin_hash: null,
+                  setup_complete: false,
                   full_name: variables.full_name,
                   email: variables.email,
                   role: variables.role,

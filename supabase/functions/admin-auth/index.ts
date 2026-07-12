@@ -11,58 +11,49 @@ const supabaseRTK = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
 });
 const supabaseAuth = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
-function generatePin(): string {
-  return Array.from({ length: 8 }, () => Math.floor(Math.random() * 10)).join("");
+function generateSecurePassword(): string {
+  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+  return Array.from({ length: 20 }, () => chars[Math.floor(Math.random() * chars.length)]).join("");
 }
 
-// Función para crear un hash seguro del PIN usando SHA-256 con salt
 async function hashPin(pin: string): Promise<string> {
-  // Generar salt aleatorio (16 bytes)
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const encoder = new TextEncoder();
   const data = new Uint8Array([...salt, ...encoder.encode(pin)]);
   const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  
-  // Convertir a formato almacenable: salt:hash (ambos en hex)
+
   const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
   const hashHex = Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-  
+
   return `sha256:${saltHex}:${hashHex}`;
 }
 
-// Función para verificar un PIN contra su hash
 async function verifyPin(pin: string, hash: string): Promise<boolean> {
-  if (!hash.startsWith('sha256:')) {
-    // Formato desconocido, asumir que es un hash legado (para compatibilidad durante migración)
-    // En un entorno real, deberíamos manejar esto de manera más segura
-    return false;
-  }
-  
+  if (!hash.startsWith('sha256:')) return false;
+
   try {
     const parts = hash.split(':');
     if (parts.length !== 3) return false;
-    
+
     const algorithm = parts[0];
     const saltHex = parts[1];
     const expectedHashHex = parts[2];
-    
+
     if (algorithm !== 'sha256') return false;
-    
-    // Decodificar salt desde hex
+
     const saltBytes = new Uint8Array(
       saltHex.match(/.{1,2}/g)!.map(byte => parseInt(byte, 16))
     );
-    
-    // Calcular hash del PIN proporcionado
+
     const encoder = new TextEncoder();
     const data = new Uint8Array([...saltBytes, ...encoder.encode(pin)]);
     const hashBuffer = await crypto.subtle.digest('SHA-256', data);
     const hashHex = Array.from(new Uint8Array(hashBuffer))
       .map(b => b.toString(16).padStart(2, '0'))
       .join('');
-    
+
     return hashHex === expectedHashHex;
-  } catch (e) {
+  } catch {
     return false;
   }
 }
@@ -70,21 +61,26 @@ async function verifyPin(pin: string, hash: string): Promise<boolean> {
 const SENDGRID_API_KEY = Deno.env.get("SENDGRID_API_KEY");
 const SITE_URL = Deno.env.get("SITE_URL") || "http://localhost:5173";
 
-async function sendPinEmail(email: string, pin: string, fullName: string) {
+async function sendSetupLinkEmail(email: string, fullName: string, token: string, siteUrl?: string) {
   if (!SENDGRID_API_KEY) {
     console.warn("SENDGRID_API_KEY no configurada, email no enviado");
     return;
   }
+  const baseUrl = siteUrl || SITE_URL;
+  const setupUrl = `${baseUrl}/setup?token=${token}`;
   const html = `
     <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
-      <h2 style="color:#6366f1">Agenda Escolar</h2>
+      <h2 style="color:#6366f1">Agenda Escolar — Configura tu código</h2>
       <p>Hola <strong>${fullName}</strong>,</p>
-      <p>Tu código de acceso es:</p>
-      <div style="font-size:32px;letter-spacing:8px;font-weight:bold;color:#6366f1;text-align:center;padding:24px;background:#eef2ff;border-radius:12px;margin:16px 0">
-        ${pin}
-      </div>
-      <p>Ingresa en <a href="${SITE_URL}" style="color:#6366f1">${SITE_URL}</a> con este código.</p>
-      <p style="color:#94a3b8;font-size:12px">Este código es personal e intransferible. No lo compartas.</p>
+      <p>Has sido registrado en Agenda Escolar. Para acceder, primero debes crear tu código de acceso personal de 4 dígitos.</p>
+      <p style="text-align:center;margin:24px 0">
+        <a href="${setupUrl}" style="display:inline-block;padding:14px 32px;background:#6366f1;color:#fff;text-decoration:none;border-radius:12px;font-weight:bold;font-size:16px">
+          Configurar código de acceso
+        </a>
+      </p>
+      <p>O copia este enlace en tu navegador:</p>
+      <p style="font-size:12px;color:#94a3b8;word-break:break-all">${setupUrl}</p>
+      <p style="color:#94a3b8;font-size:12px">Este enlace expira en 24 horas. Si no solicitaste esto, ignora este mensaje.</p>
     </div>
   `;
   const res = await fetch("https://api.sendgrid.com/v3/mail/send", {
@@ -96,7 +92,7 @@ async function sendPinEmail(email: string, pin: string, fullName: string) {
     body: JSON.stringify({
       personalizations: [{ to: [{ email }] }],
       from: { email: "docuarchviosite@gmail.com", name: "Agenda Escolar" },
-      subject: "Tu código de acceso - Agenda Escolar",
+      subject: "Configura tu código de acceso - Agenda Escolar",
       content: [{ type: "text/html", value: html }],
     }),
   });
@@ -104,6 +100,18 @@ async function sendPinEmail(email: string, pin: string, fullName: string) {
     const body = await res.text();
     throw new Error(`Error al enviar email a ${email}: ${body}`);
   }
+}
+
+async function generateSetupToken(userId: string): Promise<string> {
+  const token = crypto.randomUUID();
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  const { error } = await supabaseColegio.from("setup_tokens").insert({
+    user_id: userId,
+    token,
+    expires_at: expiresAt,
+  });
+  if (error) throw new Error(`Error al generar token: ${JSON.stringify(error)}`);
+  return token;
 }
 
 const corsHeaders = {
@@ -122,14 +130,15 @@ Deno.serve(async (req) => {
 
     switch (action) {
       case "create-user": {
-        const { full_name, email, role, course_ids } = params as {
+        const { full_name, email, role, course_ids, site_url } = params as {
           full_name: string;
           email: string;
           role: "admin" | "profesor" | "usuario";
           course_ids?: string[];
+          site_url?: string;
         };
-        const pin = generatePin();
-        const pinHash = await hashPin(pin); // Generar hash seguro en lugar de guardar PIN plano
+
+        const tempPassword = generateSecurePassword();
 
         const saveCourses = async (userId: string) => {
           if (!course_ids?.length) return;
@@ -154,20 +163,29 @@ Deno.serve(async (req) => {
 
           const { error: upsertError } = await supabaseColegio
             .from("profiles")
-            .upsert({ id: existing.id, pin_hash: pinHash, email, full_name, role });
+            .upsert({
+              id: existing.id,
+              pin_hash: null,
+              pin: null,
+              setup_complete: false,
+              email,
+              full_name,
+              role,
+            });
 
           if (upsertError) throw upsertError;
 
           await supabaseAuth.auth.admin.updateUserById(existing.id, {
-            password: pin,
             user_metadata: { full_name, role },
           });
 
           await saveCourses(existing.id);
-          await sendPinEmail(email, pin, full_name);
+
+          const token = await generateSetupToken(existing.id);
+          await sendSetupLinkEmail(email, full_name, token, site_url);
 
           return new Response(
-            JSON.stringify({ ok: true, pin, user_id: existing.id }),
+            JSON.stringify({ ok: true, user_id: existing.id }),
             { headers: { ...corsHeaders, "Content-Type": "application/json" } },
           );
         }
@@ -175,7 +193,7 @@ Deno.serve(async (req) => {
         const { data: authUser, error: createError } =
           await supabaseAuth.auth.admin.createUser({
             email,
-            password: pin,
+            password: tempPassword,
             email_confirm: true,
             user_metadata: { full_name, role },
           });
@@ -184,58 +202,56 @@ Deno.serve(async (req) => {
 
         const { error: upsertError } = await supabaseColegio
           .from("profiles")
-          .upsert({ id: authUser.user.id, pin_hash: pinHash, email, full_name, role });
+          .upsert({
+            id: authUser.user.id,
+            pin_hash: null,
+            pin: null,
+            setup_complete: false,
+            email,
+            full_name,
+            role,
+          });
 
         if (upsertError) throw upsertError;
 
         await saveCourses(authUser.user.id);
-        await sendPinEmail(email, pin, full_name);
+
+        const token = await generateSetupToken(authUser.user.id);
+        await sendSetupLinkEmail(email, full_name, token, site_url);
 
         return new Response(
-          JSON.stringify({ ok: true, pin, user_id: authUser.user.id }),
+          JSON.stringify({ ok: true, user_id: authUser.user.id }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 
       case "reset-pin": {
-        const { user_id } = params as { user_id: string };
-        const pin = generatePin();
-        const pinHash = await hashPin(pin); // Generar hash seguro
+        const { user_id, site_url } = params as { user_id: string; site_url?: string };
 
-        const { error: userError } =
-          await supabaseAuth.auth.admin.getUserById(user_id);
-        if (userError) throw userError;
-
-        await supabaseAuth.auth.admin.updateUserById(user_id, {
-          password: pin,
-        });
-
-        const { data: profile } = await supabaseColegio
+        const { data: profile, error: profileError } = await supabaseColegio
           .from("profiles")
           .select("email, full_name")
           .eq("id", user_id)
           .single();
 
-        if (!profile) throw new Error("Perfil no encontrado");
+        if (profileError) throw new Error("Perfil no encontrado");
 
-        const { error: updateError } = await supabaseColegio
+        await supabaseColegio
           .from("profiles")
-          .update({ pin_hash: pinHash }) // Actualizar hash en lugar de PIN plano
+          .update({ pin_hash: null, setup_complete: false })
           .eq("id", user_id);
 
-        if (updateError) throw updateError;
-
-        await sendPinEmail(profile.email!, pin, profile.full_name);
+        const token = await generateSetupToken(user_id);
+        await sendSetupLinkEmail(profile.email!, profile.full_name, token, site_url);
 
         return new Response(
-          JSON.stringify({ ok: true, pin }),
+          JSON.stringify({ ok: true }),
           { headers: { ...corsHeaders, "Content-Type": "application/json" } },
         );
       }
 
       case "recover-pin": {
-        // Nueva acción para recuperación de PIN por email (acceso público)
-        const { email } = params as { email: string };
+        const { email, site_url } = params as { email: string; site_url?: string };
 
         if (!email) {
           return new Response(
@@ -244,16 +260,13 @@ Deno.serve(async (req) => {
           );
         }
 
-        // Buscar el perfil por email
         const { data: profile, error: profileError } = await supabaseColegio
           .from("profiles")
-          .select("id, email, full_name")
+          .select("id, email, full_name, setup_complete")
           .eq("email", email)
           .single();
 
-        if (profileError) {
-          // No revelamos si el email existe o no por seguridad de enumeración
-          // Pero simulamos éxito para no filtrar información
+        if (profileError || !profile) {
           await simulateDelay();
           return new Response(
             JSON.stringify({ ok: true, message: "Si el correo está registrado, se ha enviado un nuevo código" }),
@@ -261,33 +274,14 @@ Deno.serve(async (req) => {
           );
         }
 
-        if (!profile) {
-          // Mismo enfoque: no revelar inexistencia
-          await simulateDelay();
-          return new Response(
-            JSON.stringify({ ok: true, message: "Si el correo está registrado, se ha enviado un nuevo código" }),
-            { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-
-        // Generar nuevo PIN y hash
-        const pin = generatePin();
-        const pinHash = await hashPin(pin);
-
-        // Actualizar Auth y perfil
-        await supabaseAuth.auth.admin.updateUserById(profile.id, {
-          password: pin,
-        });
-
-        const { error: updateError } = await supabaseColegio
+        // Invalidar PIN actual y enviar setup link
+        await supabaseColegio
           .from("profiles")
-          .update({ pin_hash: pinHash })
+          .update({ pin_hash: null, setup_complete: false })
           .eq("id", profile.id);
 
-        if (updateError) throw updateError;
-
-        // Enviar email con el nuevo PIN
-        await sendPinEmail(profile.email, pin, profile.full_name);
+        const token = await generateSetupToken(profile.id);
+        await sendSetupLinkEmail(profile.email, profile.full_name, token, site_url);
 
         return new Response(
           JSON.stringify({ ok: true }),
@@ -366,6 +360,40 @@ Deno.serve(async (req) => {
         );
       }
 
+      case "force-delete-user": {
+        const { user_id } = params as { user_id: string };
+
+        if (!user_id) {
+          return new Response(
+            JSON.stringify({ error: "user_id requerido" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+
+        // Nullify FK refs first
+        await supabaseColegio.from("events").update({ created_by: null }).eq("created_by", user_id);
+        await supabaseColegio.from("access_requests").update({ approved_by: null }).eq("approved_by", user_id);
+
+        // Delete profile
+        await supabaseColegio.from("profiles").delete().eq("id", user_id);
+
+        // Delete auth user directly using auth schema client
+        const supabaseAuthRaw = createClient(SUPABASE_URL, SERVICE_ROLE_KEY, {
+          db: { schema: "auth" },
+        });
+        const { error: rawDelError } = await supabaseAuthRaw
+          .from("users")
+          .delete()
+          .eq("id", user_id);
+
+        if (rawDelError) throw new Error(`Error al eliminar auth user: ${JSON.stringify(rawDelError)}`);
+
+        return new Response(
+          JSON.stringify({ ok: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
       case "update-permissions": {
         const { user_id, permissions } = params as {
           user_id: string;
@@ -413,8 +441,6 @@ Deno.serve(async (req) => {
       }
 
       case "send-info": {
-        // NOTA: Esta función ya no puede enviar el PIN actual porque solo tenemos el hash
-        // En su lugar, informamos al usuario que debe usar la función de recuperación
         const { user_id } = params as { user_id: string };
 
         const { data: profile } = await supabaseColegio
@@ -425,7 +451,6 @@ Deno.serve(async (req) => {
 
         if (!profile) throw new Error("Perfil no encontrado");
 
-        // Enviar email informativo en lugar del PIN actual
         if (SENDGRID_API_KEY) {
           const html = `
             <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
@@ -515,6 +540,248 @@ Deno.serve(async (req) => {
         );
       }
 
+      // === NEW ACTIONS ===
+
+      case "send-setup-link": {
+        const { user_id, site_url } = params as { user_id: string; site_url?: string };
+
+        const { data: profile, error: profileError } = await supabaseColegio
+          .from("profiles")
+          .select("email, full_name")
+          .eq("id", user_id)
+          .single();
+
+        if (profileError || !profile) throw new Error("Perfil no encontrado");
+
+        const token = await generateSetupToken(user_id);
+        await sendSetupLinkEmail(profile.email, profile.full_name, token, site_url);
+
+        return new Response(
+          JSON.stringify({ ok: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      case "verify-setup-token": {
+        const { token } = params as { token: string };
+
+        const { data: record, error } = await supabaseColegio
+          .from("setup_tokens")
+          .select("id, user_id, expires_at, used_at")
+          .eq("token", token)
+          .maybeSingle();
+
+        if (error || !record) {
+          return new Response(
+            JSON.stringify({ error: "Token inválido o no encontrado" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        if (record.used_at) {
+          return new Response(
+            JSON.stringify({ error: "Este enlace ya fue utilizado" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        if (new Date(record.expires_at) < new Date()) {
+          return new Response(
+            JSON.stringify({ error: "Este enlace ha expirado. Solicita uno nuevo." }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        const { data: profile } = await supabaseColegio
+          .from("profiles")
+          .select("id, email, full_name")
+          .eq("id", record.user_id)
+          .single();
+
+        if (!profile) {
+          return new Response(
+            JSON.stringify({ error: "Usuario no encontrado" }),
+            { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        return new Response(
+          JSON.stringify({
+            ok: true,
+            user_id: profile.id,
+            email: profile.email,
+            full_name: profile.full_name,
+          }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      case "complete-setup": {
+        const { token, pin } = params as { token: string; pin: string };
+
+        if (!pin || pin.length !== 4 || !/^\d{4}$/.test(pin)) {
+          return new Response(
+            JSON.stringify({ error: "El PIN debe tener 4 dígitos numéricos" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        const { data: record, error } = await supabaseColegio
+          .from("setup_tokens")
+          .select("id, user_id, expires_at, used_at")
+          .eq("token", token)
+          .maybeSingle();
+
+        if (error || !record) {
+          return new Response(
+            JSON.stringify({ error: "Token inválido" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        if (record.used_at) {
+          return new Response(
+            JSON.stringify({ error: "Este enlace ya fue utilizado" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        if (new Date(record.expires_at) < new Date()) {
+          return new Response(
+            JSON.stringify({ error: "Este enlace ha expirado" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        const pinHash = await hashPin(pin);
+
+        const { error: updateError } = await supabaseColegio
+          .from("profiles")
+          .update({ pin_hash: pinHash, setup_complete: true, pin: null })
+          .eq("id", record.user_id);
+
+        if (updateError) throw updateError;
+
+        const { error: authError } = await supabaseAuth.auth.admin.updateUserById(record.user_id, {
+          password: `pin_${pin}`,
+        });
+        if (authError) throw new Error(`Error al actualizar contraseña: ${authError.message}`);
+
+        const { error: markError } = await supabaseColegio
+          .from("setup_tokens")
+          .update({ used_at: new Date().toISOString() })
+          .eq("id", record.id);
+
+        if (markError) throw markError;
+
+        return new Response(
+          JSON.stringify({ ok: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      case "change-pin": {
+        const { current_pin, new_pin } = params as {
+          current_pin: string;
+          new_pin: string;
+        };
+
+        if (!new_pin || new_pin.length !== 4 || !/^\d{4}$/.test(new_pin)) {
+          return new Response(
+            JSON.stringify({ error: "El nuevo PIN debe tener 4 dígitos numéricos" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        const authHeader = req.headers.get("Authorization");
+        if (!authHeader) {
+          return new Response(
+            JSON.stringify({ error: "No autorizado" }),
+            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        const token = authHeader.replace("Bearer ", "");
+        const { data: { user } } = await supabaseAuth.auth.getUser(token);
+        if (!user) {
+          return new Response(
+            JSON.stringify({ error: "No autorizado" }),
+            { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        const { data: profile } = await supabaseColegio
+          .from("profiles")
+          .select("pin_hash")
+          .eq("id", user.id)
+          .single();
+
+        if (!profile?.pin_hash) {
+          return new Response(
+            JSON.stringify({ error: "No se puede cambiar el PIN en este momento" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        const valid = await verifyPin(current_pin, profile.pin_hash);
+        if (!valid) {
+          return new Response(
+            JSON.stringify({ error: "El PIN actual no es correcto" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+          );
+        }
+
+        const newPinHash = await hashPin(new_pin);
+
+        const { error: updateError } = await supabaseColegio
+          .from("profiles")
+          .update({ pin_hash: newPinHash, pin: null })
+          .eq("id", user.id);
+
+        if (updateError) throw updateError;
+
+        const { error: authError } = await supabaseAuth.auth.admin.updateUserById(user.id, {
+          password: `pin_${new_pin}`,
+        });
+        if (authError) throw new Error(`Error al actualizar contraseña: ${authError.message}`);
+
+        return new Response(
+          JSON.stringify({ ok: true }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
+      case "migrate-all": {
+        const { site_url } = params as { site_url?: string };
+        const { data: profiles, error: profilesError } = await supabaseColegio
+          .from("profiles")
+          .select("id, email, full_name, role")
+          .in("role", ["usuario", "profesor"]);
+
+        if (profilesError) throw profilesError;
+
+        let count = 0;
+        for (const p of profiles ?? []) {
+          try {
+            await supabaseColegio
+              .from("profiles")
+              .update({ pin_hash: null, setup_complete: false, pin: null })
+              .eq("id", p.id);
+
+            const token = await generateSetupToken(p.id);
+            await sendSetupLinkEmail(p.email, p.full_name, token, site_url);
+            count++;
+          } catch (e) {
+            console.error(`Error migrando usuario ${p.id}:`, e);
+          }
+        }
+
+        return new Response(
+          JSON.stringify({ ok: true, count }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+        );
+      }
+
       default:
         return new Response(
           JSON.stringify({ error: `Acción desconocida: ${action}` }),
@@ -531,7 +798,6 @@ Deno.serve(async (req) => {
   }
 });
 
-// Función auxiliar para simular retraso y evitar enumeración de emails
 async function simulateDelay() {
   return new Promise(resolve => setTimeout(resolve, 500));
 }
