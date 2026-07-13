@@ -74,11 +74,9 @@ export default function EventCard({ event, courseColor, courseName, subjectName,
                 {subjectName}
               </span>
             )}
-            {!courseName && !subjectName && (
-              <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase" style={{ color, backgroundColor: `${color}15` }}>
-                {evaluationTypes ? (typeLabels[event.type] ?? event.type) : event.type}
-              </span>
-            )}
+            <span className={"inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase border " + getContrastText(color)} style={{ backgroundColor: color, borderColor: getContrastBorder(color) }}>
+              {evaluationTypes ? (typeLabels[event.type] ?? event.type) : event.type}
+            </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             {date.toLocaleDateString("es-CL", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
@@ -90,7 +88,7 @@ export default function EventCard({ event, courseColor, courseName, subjectName,
                 title={`Creado por: ${creatorName}`}
               >
                 <span
-                  className="w-4 h-4 rounded-full flex items-center justify-center text-[8px] font-bold text-white shrink-0"
+                  className="w-8 h-8 rounded-full flex items-center justify-center text-base font-bold text-white shrink-0"
                   style={{ backgroundColor: creatorColor ?? "#6366f1" }}
                 >
                   {creatorIconEmoji ?? creatorName.charAt(0).toUpperCase()}

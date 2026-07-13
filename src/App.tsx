@@ -15,6 +15,7 @@ import SubjectsPage from "@/pages/SubjectsPage";
 import EvaluationTypesPage from "@/pages/EvaluationTypesPage";
 import UsersPage from "@/pages/UsersPage";
 import SettingsPage from "@/pages/SettingsPage";
+import ActivityLogPage from "@/pages/ActivityLogPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 
 const queryClient = new QueryClient({
@@ -76,6 +77,7 @@ function App() {
               <Route path="/tipos-evaluacion" element={<TeacherRoute><EvaluationTypesPage /></TeacherRoute>} />
               <Route path="/usuarios" element={<TeacherRoute><UsersPage /></TeacherRoute>} />
               <Route path="/ajustes" element={<SettingsPage />} />
+              <Route path="/log-actividades" element={<ActivityLogPage />} />
             </Route>
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

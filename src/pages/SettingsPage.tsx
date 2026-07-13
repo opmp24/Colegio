@@ -371,6 +371,15 @@ export default function SettingsPage() {
           </svg>
           Cerrar sesión
         </button>
+        <button
+          onClick={() => navigate("/log-actividades")}
+          className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-slate-50 dark:bg-slate-700/50 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors text-sm font-medium text-primary-600 dark:text-primary-400 mt-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+          </svg>
+          Log de actividades
+        </button>
       </section>
 
       {/* App Info */}
