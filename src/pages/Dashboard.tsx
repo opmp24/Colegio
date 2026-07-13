@@ -10,6 +10,7 @@ import CalendarGrid from "@/components/Calendar/CalendarGrid";
 import EventCard from "@/components/EventCard/EventCard";
 import EventDetailModal from "@/components/EventDetailModal/EventDetailModal";
 import gsap from "gsap";
+import { AVATAR_ICONS } from "@/lib/avatar";
 import type { Subject, Event } from "@/types";
 
 export default function Dashboard() {
@@ -90,6 +91,11 @@ export default function Dashboard() {
     (subjects ?? []).forEach((s) => map.set(s.id, s));
     return map;
   }, [subjects]);
+
+  const resolveIcon = (iconId?: string | null) => {
+    if (!iconId) return undefined;
+    return AVATAR_ICONS.find(i => i.id === iconId)?.emoji;
+  };
 
   const eventsByDate = useMemo(() => {
     const map: Record<string, { color: string }[]> = {};
@@ -280,7 +286,7 @@ export default function Dashboard() {
                     courseColor={ev.courses?.color}
                     courseName={ev.courses ? `${ev.courses.grade} ${ev.courses.name}` : undefined}
                     subjectName={subj?.name}
-                    subjectIcon={subj?.icon}
+                    subjectIcon={resolveIcon(subj?.icon)}
                     subjectColor={subj?.color}
                     evaluationTypes={evaluationTypes}
                     creatorName={creator?.full_name}
@@ -326,7 +332,7 @@ export default function Dashboard() {
                   courseColor={ev.courses?.color}
                   courseName={ev.courses ? `${ev.courses.grade} ${ev.courses.name}` : undefined}
                   subjectName={subj?.name}
-                  subjectIcon={subj?.icon}
+                  subjectIcon={resolveIcon(subj?.icon)}
                   subjectColor={subj?.color}
                   evaluationTypes={evaluationTypes}
                   creatorName={creator?.full_name}
@@ -346,7 +352,7 @@ export default function Dashboard() {
           courseColor={selectedEvent.courses?.color}
           courseName={selectedEvent.courses ? `${selectedEvent.courses.grade} ${selectedEvent.courses.name}` : undefined}
           subjectName={(() => { const subj = selectedEvent.subject_id ? subjectMap.get(selectedEvent.subject_id) : undefined; return subj?.name; })()}
-          subjectIcon={(() => { const subj = selectedEvent.subject_id ? subjectMap.get(selectedEvent.subject_id) : undefined; return subj?.icon; })()}
+          subjectIcon={resolveIcon((() => { const subj = selectedEvent.subject_id ? subjectMap.get(selectedEvent.subject_id) : undefined; return subj?.icon; })())}
           subjectColor={(() => { const subj = selectedEvent.subject_id ? subjectMap.get(selectedEvent.subject_id) : undefined; return subj?.color; })()}
           evaluationTypes={evaluationTypes}
           creatorName={(selectedEvent as any).creator?.full_name}

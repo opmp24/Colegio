@@ -5,9 +5,8 @@ import { useConfirm } from "@/hooks/useConfirm";
 import BackToSettings from "@/components/BackToSettings/BackToSettings";
 import { useToast } from "@/hooks/useToast";
 import { getContrastText, getContrastBorder } from "@/lib/color";
+import { AVATAR_ICONS } from "@/lib/avatar";
 import type { Subject } from "@/types";
-
-const EMOJIS = ["📚", "📐", "🔬", "🌍", "📖", "🎨", "🎵", "⚽", "💻", "🧮", "🔤", "🧪", "📜", "🗣️", "🧠"];
 
 export default function SubjectsPage() {
   const { data: courses } = useCourses();
@@ -18,12 +17,13 @@ export default function SubjectsPage() {
   const toast = useToast();
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
-  const [form, setForm] = useState({ course_id: "", name: "", profesor_name: "", color: "#6366f1", icon: "📚" });
+  const [form, setForm] = useState({ course_id: "", name: "", profesor_name: "", color: "#6366f1", icon: "book" });
   const [filterCourseId, setFilterCourseId] = useState<string | null>(null); // null = show all
+  const [showAllIcons, setShowAllIcons] = useState(false);
   const { confirm: confirmDelete, dialog: confirmDialog } = useConfirm();
 
   const resetForm = () => {
-    setForm({ course_id: "", name: "", profesor_name: "", color: "#6366f1", icon: "📚" });
+    setForm({ course_id: "", name: "", profesor_name: "", color: "#6366f1", icon: "book" });
     setEditing(null);
     setShowForm(false);
   };
@@ -94,18 +94,31 @@ export default function SubjectsPage() {
             <div>
               <label className="block text-xs font-semibold text-gray-600 dark:text-slate-400 mb-1">Ícono</label>
               <div className="flex flex-wrap gap-1">
-                {EMOJIS.map((emoji) => (
+                {(showAllIcons ? AVATAR_ICONS : AVATAR_ICONS.slice(0, 5)).map((ico) => (
                   <button
-                    key={emoji}
+                    key={ico.id}
                     type="button"
-                    onClick={() => setForm({ ...form, icon: emoji })}
+                    onClick={() => setForm({ ...form, icon: ico.id })}
                     className={`w-8 h-8 flex items-center justify-center rounded-lg text-lg transition-colors ${
-                      form.icon === emoji ? "bg-primary-100 dark:bg-primary-900/50 ring-2 ring-primary-500" : "hover:bg-slate-100 dark:hover:bg-slate-700"
+                      form.icon === ico.id
+                        ? "bg-primary-100 dark:bg-primary-900/50 ring-2 ring-primary-500"
+                        : "hover:bg-slate-100 dark:hover:bg-slate-700"
                     }`}
+                    title={ico.label}
                   >
-                    {emoji}
+                    {ico.emoji}
                   </button>
                 ))}
+                {AVATAR_ICONS.length > 5 && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllIcons(!showAllIcons)}
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-lg font-bold border border-dashed border-slate-300 dark:border-slate-500 text-slate-400 dark:text-slate-500 hover:border-primary-400 hover:text-primary-500 dark:hover:border-primary-400 dark:hover:text-primary-400 bg-white dark:bg-slate-700 transition-colors"
+                    title={showAllIcons ? "Ver menos iconos" : "Ver más iconos"}
+                  >
+                    {showAllIcons ? "−" : "+"}
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -151,7 +164,7 @@ export default function SubjectsPage() {
               return (
                 <div key={s.id} className="bg-white dark:bg-slate-800 rounded-none p-4 shadow-sm dark:shadow-slate-900/50 flex items-center gap-3 border border-gray-200 dark:border-slate-700">
                   <div className="w-10 h-10 rounded-lg flex items-center justify-center text-xl border" style={{ backgroundColor: s.color, borderColor: getContrastBorder(s.color) }}>
-                    {s.icon}
+                    {AVATAR_ICONS.find(i => i.id === s.icon)?.emoji ?? "📚"}
                   </div>
                   <div className="flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">

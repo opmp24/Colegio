@@ -37,8 +37,6 @@ export default function UsersPage() {
   const [expandedCourses, setExpandedCourses] = useState<string | null>(null);
   const [approvingRequest, setApprovingRequest] = useState<string | null>(null);
   const [approveCourseIds, setApproveCourseIds] = useState<string[]>([]);
-  const [migrating, setMigrating] = useState(false);
-
   const { data: courseMembers, refetch: refetchCourseMembers } = useQuery({
     queryKey: ["course-members"],
     queryFn: async () => {
@@ -203,26 +201,6 @@ export default function UsersPage() {
     }
   };
 
-  const handleMigrateAll = async () => {
-    const ok = await confirm({
-      title: "Migrar todos los usuarios",
-      message: "¿Estás seguro? Se invalidarán todos los códigos actuales de alumnos y profesores, y se enviará un enlace de configuración a cada uno por correo.",
-      confirmLabel: "Migrar todos",
-      variant: "danger",
-    });
-    if (!ok) return;
-    setMigrating(true);
-    try {
-      const result = await admin.migrateAll();
-      toast.success(`Migración completada. Se enviaron ${result.count} enlaces de configuración.`);
-      refetch();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Error al migrar usuarios");
-    } finally {
-      setMigrating(false);
-    }
-  };
-
   return (
     <div className="px-4 py-4 space-y-4">
       <div className="flex items-center justify-between">
@@ -231,11 +209,11 @@ export default function UsersPage() {
           <div className="flex gap-2">
             {isAdmin && (
               <button
-                onClick={handleMigrateAll}
-                disabled={migrating}
-                className="px-4 py-2 bg-amber-600 hover:bg-amber-700 disabled:bg-slate-300 dark:disabled:bg-slate-600 text-white font-medium rounded-md focus:outline-none focus:ring-2 focus:ring-amber-300 dark:focus:ring-amber-800 text-sm"
+                disabled
+                className="px-4 py-2 bg-slate-300 dark:bg-slate-600 text-white font-medium rounded-md text-sm cursor-not-allowed"
+                title="Función deshabilitada — migración completada"
               >
-                {migrating ? "Migrando..." : "Migrar todos"}
+                Reset Acceso
               </button>
             )}
             <button
