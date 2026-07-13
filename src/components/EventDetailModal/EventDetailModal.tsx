@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import type { Event } from "@/types";
+import type { Event, EvaluationType } from "@/types";
 import { useAuth } from "@/context/AuthContext";
 import { useDeleteEvent } from "@/hooks/useEvents";
 import { useToast } from "@/hooks/useToast";
@@ -15,13 +15,14 @@ interface EventDetailModalProps {
   subjectIcon?: string;
   subjectColor?: string;
   courseColor?: string;
+  evaluationTypes?: EvaluationType[];
   creatorName?: string;
   creatorIcon?: string;
   creatorColor?: string;
   onClose: () => void;
 }
 
-export default function EventDetailModal({ event, courseName, subjectName, subjectIcon, subjectColor, courseColor, creatorName, creatorIcon, creatorColor, onClose }: EventDetailModalProps) {
+export default function EventDetailModal({ event, courseName, subjectName, subjectIcon, subjectColor, courseColor, evaluationTypes, creatorName, creatorIcon, creatorColor, onClose }: EventDetailModalProps) {
   const navigate = useNavigate();
   const { profile } = useAuth();
   const deleteEvent = useDeleteEvent();
@@ -29,6 +30,12 @@ export default function EventDetailModal({ event, courseName, subjectName, subje
   const [showConfirm, setShowConfirm] = useState(false);
   const date = new Date(event.due_date);
   const color = courseColor ?? "#6366f1";
+
+  const typeLabels = useMemo(() => {
+    const map: Record<string, string> = {};
+    (evaluationTypes ?? []).forEach((t) => { map[t.name] = t.label; });
+    return map;
+  }, [evaluationTypes]);
 
   const creatorIconEmoji = useMemo(() => {
     if (!creatorIcon) return undefined;
@@ -99,7 +106,7 @@ export default function EventDetailModal({ event, courseName, subjectName, subje
             <div className="flex items-center gap-2 mb-4 text-sm text-slate-500 dark:text-slate-400">
               <span className="text-xs font-medium">Creado por</span>
               <span
-                className="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold text-white shrink-0"
+                className="w-10 h-10 rounded-full flex items-center justify-center text-lg font-bold text-white shrink-0"
                 style={{ backgroundColor: creatorColor ?? "#6366f1" }}
               >
                 {creatorIconEmoji ?? creatorName.charAt(0).toUpperCase()}
@@ -108,9 +115,9 @@ export default function EventDetailModal({ event, courseName, subjectName, subje
             </div>
           )}
 
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold" style={{ color, backgroundColor: `${color}15` }}>
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-            {event.type}
+          <div className={"inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border " + getContrastText(color)} style={{ backgroundColor: color, borderColor: getContrastBorder(color) }}>
+            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: getContrastText(color) === "text-white" ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.3)" }} />
+            {evaluationTypes ? (typeLabels[event.type] ?? event.type) : event.type}
           </div>
 
           {event.description && (

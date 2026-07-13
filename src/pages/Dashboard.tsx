@@ -348,6 +348,7 @@ export default function Dashboard() {
           subjectName={(() => { const subj = selectedEvent.subject_id ? subjectMap.get(selectedEvent.subject_id) : undefined; return subj?.name; })()}
           subjectIcon={(() => { const subj = selectedEvent.subject_id ? subjectMap.get(selectedEvent.subject_id) : undefined; return subj?.icon; })()}
           subjectColor={(() => { const subj = selectedEvent.subject_id ? subjectMap.get(selectedEvent.subject_id) : undefined; return subj?.color; })()}
+          evaluationTypes={evaluationTypes}
           creatorName={(selectedEvent as any).creator?.full_name}
           creatorIcon={(selectedEvent as any).creator?.avatar_icon}
           creatorColor={(selectedEvent as any).creator?.avatar_color}
