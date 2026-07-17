@@ -57,6 +57,7 @@ export default function CreateEvent() {
       type: "test",
       description: "",
       due_date: dateParam,
+      visibility: "all",
     },
   });
 
@@ -70,6 +71,7 @@ export default function CreateEvent() {
       type: editEvent.type,
       description: editEvent.description ?? "",
       due_date: editEvent.due_date.slice(0, 16),
+      visibility: editEvent.visibility ?? "all",
     });
   }, [editEvent, reset]);
 
@@ -91,6 +93,7 @@ export default function CreateEvent() {
         description: data.description,
         type: data.type,
         due_date: new Date(data.due_date).toISOString(),
+        visibility: data.visibility,
       };
       if (isEditing && editId) {
         await updateEvent.mutateAsync({ id: editId, ...payload });
@@ -238,6 +241,24 @@ export default function CreateEvent() {
             )}
           </div>
 
+          {profile?.role !== "usuario" && (
+            <div className="lg:col-span-2">
+              <label className="flex items-center gap-3 py-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={watch("visibility") === "all"}
+                  onChange={(e) => setValue("visibility", e.target.checked ? "all" : "admin_teacher")}
+                  className="w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-primary-600 focus:ring-primary-300 cursor-pointer"
+                />
+                <div>
+                  <span className="text-sm font-semibold text-gray-700 dark:text-slate-200">Visible para apoderados y alumnos</span>
+                  <p className="text-xs text-gray-500 dark:text-slate-400">
+                    Si desactivas, solo profesores y administradores podrán ver esta actividad
+                  </p>
+                </div>
+              </label>
+            </div>
+          )}
           <div className="pt-4 flex gap-3 lg:col-span-2">
             <button
               type="button"

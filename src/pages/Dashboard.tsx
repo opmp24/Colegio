@@ -1,6 +1,7 @@
 import { useState, useMemo, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useEvents, useUpcomingEvents } from "@/hooks/useEvents";
+import { useLatestNews } from "@/hooks/useNews";
 import { useCourses } from "@/hooks/useCourses";
 import { useUserCourses } from "@/hooks/useUserCourses";
 import { useSubjects } from "@/hooks/useSubjects";
@@ -32,6 +33,7 @@ export default function Dashboard() {
 
   const { data: events } = useEvents(courseIds);
   const { data: upcoming } = useUpcomingEvents(isTeacher ? 5 : 10, courseIds);
+  const { data: latestNews } = useLatestNews();
 
   const today = useMemo(() => new Date(), []);
   const fmtDate = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -196,6 +198,26 @@ export default function Dashboard() {
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </div>
+
+      {/* News Marquee */}
+      {latestNews && (
+        <section
+          className="bg-white dark:bg-slate-800 rounded-xl p-3 shadow-sm dark:shadow-slate-900/50 lg:col-span-2 overflow-hidden cursor-pointer"
+          onClick={() => navigate("/noticias")}
+        >
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-bold text-primary-600 dark:text-primary-400 uppercase tracking-wider shrink-0">Novedades</span>
+            <div className="overflow-hidden flex-1 relative">
+              <p className="text-sm text-slate-600 dark:text-slate-300 whitespace-nowrap animate-marquee hover:text-primary-600 dark:hover:text-primary-400 transition-colors">
+                {latestNews.title}
+              </p>
+            </div>
+            <svg className="w-4 h-4 text-slate-400 dark:text-slate-500 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </div>
+        </section>
+      )}
 
       {/* Calendar */}
       <section

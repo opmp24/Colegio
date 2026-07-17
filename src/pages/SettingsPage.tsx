@@ -388,8 +388,7 @@ export default function SettingsPage() {
         <div className="space-y-2 text-sm">
           <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">Versión</span><span className="font-semibold dark:text-slate-200">{APP_VERSION}</span></div>
           <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">Entorno</span><span className="font-semibold dark:text-slate-200">Producción</span></div>
-          <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">© 2026 Colegio</span><span className="font-semibold text-[11px] dark:text-slate-200">Todos los derechos reservados</span></div>
-          <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">Schema</span><span className="font-semibold font-mono text-xs dark:text-slate-200">Colegio</span></div>
+          <div className="flex justify-between"><span className="text-slate-500 dark:text-slate-400">© 2026 Kurzo</span><span className="font-semibold text-[11px] dark:text-slate-200">Todos los derechos reservados</span></div>          
         </div>
       </section>
 

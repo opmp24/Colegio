@@ -1,3 +1,4 @@
 // © 2026 Colegio. Todos los derechos reservados.
 
-export const APP_VERSION = "1.4.1";
+import pkg from "../../package.json";
+export const APP_VERSION = pkg.version;

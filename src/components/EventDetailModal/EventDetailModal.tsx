@@ -115,9 +115,16 @@ export default function EventDetailModal({ event, courseName, subjectName, subje
             </div>
           )}
 
-          <div className={"inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border " + getContrastText(color)} style={{ backgroundColor: color, borderColor: getContrastBorder(color) }}>
-            <span className="w-2 h-2 rounded-full" style={{ backgroundColor: getContrastText(color) === "text-white" ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.3)" }} />
-            {evaluationTypes ? (typeLabels[event.type] ?? event.type) : event.type}
+          <div className="flex flex-wrap items-center gap-2 mt-4">
+            <div className={"inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold border " + getContrastText(color)} style={{ backgroundColor: color, borderColor: getContrastBorder(color) }}>
+              <span className="w-2 h-2 rounded-full" style={{ backgroundColor: getContrastText(color) === "text-white" ? "rgba(255,255,255,0.7)" : "rgba(0,0,0,0.3)" }} />
+              {evaluationTypes ? (typeLabels[event.type] ?? event.type) : event.type}
+            </div>
+            {event.visibility !== "all" && (
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-bold border bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700">
+                Solo profesores
+              </span>
+            )}
           </div>
 
           {event.description && (

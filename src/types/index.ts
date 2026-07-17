@@ -50,8 +50,22 @@ export interface Event {
   due_date: string;
   created_by: string;
   created_at: string;
+  visibility: string;
   courses?: Pick<Course, "grade" | "name" | "color"> | null;
   creator?: Pick<Profile, "full_name" | "avatar_icon" | "avatar_color"> | null;
+}
+
+export interface News {
+  id: string;
+  title: string;
+  description: string | null;
+  created_by: string;
+  created_at: string;
+  visibility: string;
+  publish_at: string | null;
+  course_id: string | null;
+  creator?: Pick<Profile, "full_name" | "avatar_icon" | "avatar_color"> | null;
+  courses?: Pick<Course, "grade" | "name" | "section"> | null;
 }
 
 export interface CourseMember {

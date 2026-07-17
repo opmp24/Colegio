@@ -7,6 +7,7 @@ export const eventSchema = z.object({
   type: z.string().min(1, "Tipo de evaluación es requerido"),
   description: z.string().nullable().or(z.literal("")).transform((val) => (val === "" ? null : val)),
   due_date: z.string().min(1, "Fecha y hora requeridas"),
+  visibility: z.string(),
 });
 
 export type EventFormValues = z.infer<typeof eventSchema>;

@@ -77,6 +77,11 @@ export default function EventCard({ event, courseColor, courseName, subjectName,
             <span className={"inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase border " + getContrastText(color)} style={{ backgroundColor: color, borderColor: getContrastBorder(color) }}>
               {evaluationTypes ? (typeLabels[event.type] ?? event.type) : event.type}
             </span>
+            {event.visibility !== "all" && (
+              <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border-amber-300 dark:border-amber-700">
+                Solo profesores
+              </span>
+            )}
           </div>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
             {date.toLocaleDateString("es-CL", { weekday: "short", day: "numeric", month: "short", year: "numeric" })}
