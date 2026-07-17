@@ -1,5 +1,15 @@
 # AGENTS.md — Agenda Escolar PWA
 
+> ⚠️ **REGLAS ESTRICTAS — NO VIOLAR BAJO NINGUNA CIRCUNSTANCIA**
+>
+> **1. NADA a `main` sin permiso explícito**: No hacer commits, merges, ni pushes a `main` a menos que el usuario lo pida explícitamente. El deploy a Netlify se gatilla al pushear `main` — cada push quema saldo de Netlify.
+>
+> **2. Antes de tocar `main`, preguntar**: Si el usuario pide algo que involucre `main`, responder: "Eso requiere push a main, lo que gatilla deploy. ¿Confirmas?" y esperar respuesta. Si hay duda, asumir que NO.
+>
+> **3. `develop` es la rama de trabajo**: Todo va a `develop`. A `develop` se puede commitear/pushear sin restricción.
+>
+> **4. Violar estas reglas = error grave** que no debe repetirse.
+
 ## Project Overview
 
 PWA informativa para apoderados y alumnos de un colegio, organizada por curso. Profesores/admins publican fechas de pruebas, exámenes, trabajos, ensayos, etc. Los usuarios ven un calendario y un dashboard con los próximos eventos ordenados por fecha más cercana.
@@ -8,7 +18,7 @@ PWA informativa para apoderados y alumnos de un colegio, organizada por curso. P
 - **Idioma:** Español (código, comentarios, UI, commits)
 - **Repo:** `https://github.com/opmp24/Colegio`
 - **Supabase:** Credenciales en `local/secrets/Keys.txt` (no committear)
-- **Deploy:** Automático via Netlify al pushear a `main`. Build command: `npm run build`, publish dir: `docs`. Sin CI local, sin commit de `docs/`.
+- **Deploy:** Automático vía Netlify al pushear a `main`. Build command: `npm run build`, publish dir: `docs`. Sin CI local, sin commit de `docs/`.
 - **Dominio:** `https://kurzo.netlify.app`
 
 ## Commands
@@ -207,7 +217,7 @@ src/
 2. Respuestas cortas
 3. No reescribir archivos completos
 4. No releer archivos ya leídos
-5. Validar antes de declarar hecho
+5. Validar antes de declarar
 6. Cero charla aduladora
 7. Soluciones simples
 8. No pelear con el usuario
@@ -226,5 +236,11 @@ src/
 20. no leer archivos ya vistos en la misma sesión — codegraph_explore ya los tiene en contexto
 21. siempre usar `codegraph_explore` como primera herramienta para entender flujos de código, en lugar de `read`/`grep`/`glob`
 22. Verificación cruzada migración/edge function: Toda nueva tabla creada en migración debe verificar que el schema coincide con el cliente Supabase que la edge function usa. Si la edge function usa supabaseColegio (schema Colegio), la tabla debe ir en schema Colegio. Si va en public, usar supabaseAuth. Documentar esta decisión en el PR.
-23. solo ejecuta instrucciones explicitas
-24. para cambios en supabase, siempre verifica si tienes acceso con el CLI
+23. solo ejecuta instrucciones explicitas.
+24. para cambios en supabase, siempre verifica si tienes acceso con el CLI.
+25. Utulizar siempre las mejores practicas de programacion.
+
+### Manejo de sesiones
+
+26. **SESSION.md**: Archivo en la raíz que guarda el contexto de la sesión actual. No se actualiza automáticamente — el usuario debe pedir "guarda contexto en SESSION.md" al terminar una sesión para que yo lo reescriba con el estado actual.
+27. **Retomar sesión**: Cuando el usuario dice "continúa desde SESSION.md", leer SESSION.md para restaurar el contexto completo de la sesión anterior.

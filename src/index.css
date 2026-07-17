@@ -27,3 +27,14 @@ button:not([class*="border"]):not(.border-0) {
 .dark button:not([class*="border"]):not(.border-0) {
   border-color: rgba(255, 255, 255, 0.06);
 }
+
+@keyframes marquee {
+  0% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
+}
+.animate-marquee {
+  animation: marquee 15s linear infinite;
+}
+.animate-marquee:hover {
+  animation-play-state: paused;
+}

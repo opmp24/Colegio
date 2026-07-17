@@ -16,6 +16,7 @@ import EvaluationTypesPage from "@/pages/EvaluationTypesPage";
 import UsersPage from "@/pages/UsersPage";
 import SettingsPage from "@/pages/SettingsPage";
 import ActivityLogPage from "@/pages/ActivityLogPage";
+import NoticiasPage from "@/pages/NoticiasPage";
 import NotFoundPage from "@/pages/NotFoundPage";
 
 const queryClient = new QueryClient({
@@ -78,6 +79,7 @@ function App() {
               <Route path="/usuarios" element={<TeacherRoute><UsersPage /></TeacherRoute>} />
               <Route path="/ajustes" element={<SettingsPage />} />
               <Route path="/log-actividades" element={<ActivityLogPage />} />
+              <Route path="/noticias" element={<NoticiasPage />} />
             </Route>
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

@@ -72,6 +72,7 @@ export function useCreateEvent() {
         due_date: newEvent.due_date,
         created_by: newEvent.created_by ?? "",
         created_at: new Date().toISOString(), // temporary
+        visibility: newEvent.visibility ?? "all",
         courses: undefined,
       };
 
